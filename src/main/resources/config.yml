@@ -1,0 +1,86 @@
+# =====================================================
+#   EasterEventVisantara - config.yml
+# =====================================================
+
+balloon:
+
+  # ID MythicMob yang akan di-spawn sebagai balon.
+  # Pastikan ID ini terdaftar di folder MythicMobs/Mobs/.
+  mythicmob-id: "EasterBalloon"
+
+  # --------------------------------------------------
+  # PENGATURAN SPAWN
+  # --------------------------------------------------
+
+  # Seberapa sering task spawn berjalan, dalam satuan MENIT.
+  # Contoh: 2 = task berjalan setiap 2 menit.
+  spawn-interval-minutes: 2
+
+  # Jumlah maksimal player yang dicek per satu siklus task.
+  # Ini mencegah lag saat jumlah player online sangat banyak
+  # karena tidak semua player dicek sekaligus dalam satu tick.
+  max-spawns-per-batch: 2
+
+  # Radius horizontal (dalam blok) di sekitar player
+  # sebagai area kandidat lokasi spawn balon.
+  spawn-radius: 24.0
+
+  # Probabilitas spawn berhasil setiap kali dicek (0.0 - 1.0).
+  # Contoh: 0.50 = 50% chance spawn terjadi saat task berjalan.
+  spawn-chance: 0.50
+
+  # --------------------------------------------------
+  # BATAS JUMLAH BALON (CAP)
+  # --------------------------------------------------
+
+  # Jumlah maksimal balon yang boleh aktif di seluruh server.
+  # Spawn akan dilewati jika jumlah ini sudah tercapai.
+  global-cap: 20
+
+  # Jumlah maksimal balon yang boleh aktif per player.
+  # Hanya berlaku jika cap-check-per-player: true.
+  # Contoh: 3 = satu player tidak bisa punya lebih dari 3 balon aktif.
+  per-player-cap: 3
+
+  # Jika true  → batas cap dihitung per player (pakai per-player-cap).
+  # Jika false → batas cap dihitung secara global (pakai global-cap).
+  cap-check-per-player: true
+
+  # --------------------------------------------------
+  # DESPAWN OTOMATIS
+  # --------------------------------------------------
+
+  # Waktu dalam detik sebelum balon yang tidak ditembak
+  # akan otomatis despawn dengan sendirinya.
+  despawn-seconds: 60
+
+  # --------------------------------------------------
+  # PERSYARATAN ITEM UNTUK MEMENCET BALON
+  # --------------------------------------------------
+
+  # Jika true  → player harus memegang item tertentu untuk bisa
+  #              menyerang dan memencet balon.
+  # Jika false → balon bisa dipencet dengan item apapun.
+  require-specific-item: false
+
+  # Item yang diperlukan untuk memencet balon.
+  # Hanya berlaku jika require-specific-item: true.
+  #
+  # Format yang didukung:
+  #   VANILLA:<MATERIAL>          → item vanilla biasa
+  #   MMOITEMS:<TYPE>:<ID>        → item dari plugin MMOItems
+  #
+  # Contoh:
+  #   VANILLA:STICK
+  #   MMOITEMS:SWORD:EASTER_LANCE
+  required-item: "VANILLA:STICK"
+
+  # --------------------------------------------------
+  # REWARD
+  # --------------------------------------------------
+
+  # Daftar command console yang dijalankan saat balon berhasil dipencet.
+  # Gunakan %player% sebagai placeholder nama player yang memencet.
+  reward-commands:
+    - "give %player% minecraft:egg 3"
+    - "eco give %player% 50"

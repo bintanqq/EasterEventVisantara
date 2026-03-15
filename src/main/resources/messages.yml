@@ -1,0 +1,73 @@
+# =====================================================
+#   EasterEventVisantara - messages.yml
+#   Semua pesan yang ditampilkan ke player ada di sini.
+#   Mendukung kode warna '&' di semua pesan.
+# =====================================================
+
+# Prefix yang ditampilkan di awal setiap pesan plugin.
+prefix: "&6&l[EasterEvent] &r"
+
+# Ditampilkan saat player menjalankan command tanpa izin.
+no-permission: "&cKamu tidak punya izin untuk melakukan ini."
+
+# Ditampilkan saat command yang butuh player dijalankan dari console.
+not-player: "&cHanya player yang bisa menjalankan command ini."
+
+# Ditampilkan saat sub-command tidak dikenal.
+unknown-subcommand: "&cSub-command tidak dikenal. Gunakan: &e/easter <reload|spawn|debug|status>"
+
+reload:
+  # Ditampilkan saat /easter reload berhasil dijalankan.
+  success: "&aKonfigurasi berhasil di-reload dan task di-restart."
+
+spawn:
+  # Ditampilkan saat /easter spawn berhasil spawn balon.
+  success: "&aBalloon berhasil di-spawn di lokasimu!"
+  # Ditampilkan saat /easter spawn gagal (cek console untuk detail).
+  failed: "&cGagal spawn balloon &7— cek console untuk detail error."
+
+debug:
+  # Ditampilkan saat debug mode diaktifkan via /easter debug.
+  enabled: "&aDebug mode &2AKTIF&a."
+  # Ditampilkan saat debug mode dinonaktifkan via /easter debug.
+  disabled: "&cDebug mode &4NONAKTIF&c."
+
+  # Log saat balon di-queue untuk spawn.
+  # Placeholder: {x} {y} {z} = koordinat, {world} = nama world.
+  spawn-info: "&7[DBG-SPAWN] &fBalloon queued at &e{x}&f, &e{y}&f, &e{z} &fin &e{world}"
+
+  # Log saat balon diserang oleh player.
+  # Placeholder: {entity} = UUID balon, {item} = item yang dipakai, {passed} = lolos validasi atau tidak.
+  hit-info: "&7[DBG-HIT] &fEntity &e{entity} &f| item: &e{item} &f| lolos: &e{passed}"
+
+  # Log saat balon dihapus karena waktu despawn habis.
+  # Placeholder: {entity} = UUID balon.
+  despawn-info: "&7[DBG-DESPAWN] &fBalloon &e{entity} &fkadaluarsa dan dihapus."
+
+# Ditampilkan ke admin (debug mode) saat spawn dilewati karena cap tercapai.
+cap-reached: "&eSpawn dilewati &7— cap sudah tercapai di sekitar player ini."
+
+# Ditampilkan saat player menyerang balon dengan item yang salah.
+# Hanya muncul jika require-specific-item: true di config.yml.
+item-mismatch: "&cKamu butuh item yang benar untuk memencet balon ini!"
+
+balloon:
+  # Dibroadcast ke seluruh server saat balon berhasil dipencet.
+  # Placeholder: {player} = nama player yang memencet.
+  popped: "&6&lPOP! &e{player} &6memencet sebuah balon!"
+
+status:
+  # Header pesan /easter status.
+  header: "&e===== Easter Balloon Status ====="
+
+  # Mode pengecekan cap yang sedang aktif.
+  # Placeholder: {mode} = "Per Player" atau "Global".
+  check-mode: "&fMode cap: &e{mode}"
+
+  # Jumlah balon aktif secara global.
+  # Placeholder: {active} = jumlah aktif, {cap} = batas maksimal.
+  global: "&fGlobal aktif: &e{active}&f / &e{cap}"
+
+  # Jumlah balon aktif milik satu player (hanya muncul jika cap-check-per-player: true).
+  # Placeholder: {player} = nama player, {active} = jumlah aktif, {cap} = batas per player.
+  per-player: "&f  &e{player}&f: &e{active}&f / &e{cap}"

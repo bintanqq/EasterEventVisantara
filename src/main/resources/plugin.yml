@@ -1,0 +1,22 @@
+name: EasterEventVisantara
+version: '1.0.0'
+main: me.bintanq.EasterEventVisantara
+api-version: '1.21'
+authors: [ bintanq ]
+description: Visantara Trade
+
+depend:
+  - MythicMobs
+  - ModelEngine
+  - MMOItems
+
+commands:
+  easter:
+    description: Easter Event admin command.
+    usage: /easter <reload|spawn|debug>
+    permission: easter.admin
+
+permissions:
+  easter.admin:
+    description: Access to all /easter commands.
+    default: op
