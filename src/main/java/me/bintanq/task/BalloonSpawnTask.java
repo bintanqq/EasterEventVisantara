@@ -6,6 +6,8 @@ import me.bintanq.EasterEventVisantara;
 import me.bintanq.manager.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -14,13 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BalloonSpawnTask extends BukkitRunnable {
 
     private final EasterEventVisantara plugin;
     private final Random rng = new Random();
-    private final AtomicInteger cursor = new AtomicInteger(0);
 
     public BalloonSpawnTask(EasterEventVisantara plugin) {
         this.plugin = plugin;
@@ -29,90 +31,151 @@ public class BalloonSpawnTask extends BukkitRunnable {
     @Override
     public void run() {
         ConfigManager cfg = plugin.getConfigManager();
-
-        if (!cfg.isCheckPerPlayer()) {
-            int globalCap = cfg.getGlobalBalloonCap();
-            if (globalCap != -1 && plugin.getBalloonTracker().getActiveCount() >= globalCap) return;
-        }
-
         List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
         if (players.isEmpty()) return;
 
-        int batchSize = cfg.getMaxSpawnsPerBatch();
-        int total     = players.size();
-        int start     = cursor.getAndUpdate(c -> (c + batchSize) % total);
+        List<String> disabledWorlds = cfg.getDisabledWorlds();
 
-        for (int i = 0; i < batchSize; i++) {
-            Player player = players.get((start + i) % total);
+        for (int i = 0; i < players.size(); i++) {
+            final Player player = players.get(i);
+            final long playerDelay = i;
 
-            if (cfg.isCheckPerPlayer()) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!player.isOnline()) return;
+                if (disabledWorlds.contains(player.getWorld().getName())) return;
+
+                if (!cfg.isCheckPerPlayer()) {
+                    int globalCap = cfg.getGlobalBalloonCap();
+                    if (globalCap != -1 && plugin.getBalloonTracker().getActiveCount() >= globalCap) return;
+                }
+
+                if (rng.nextDouble() > cfg.getSpawnChance()) return;
+
                 int currentCount = plugin.getBalloonTracker().getPlayerBalloonCount(player.getUniqueId());
-                if (currentCount >= cfg.getPerPlayerBalloonCap()) {
-                    if (plugin.isDebugMode()) {
-                        player.sendMessage(plugin.getConfigManager().getMsgCapReached());
-                    }
-                    continue;
-                }
-            }
+                int maxAllowed   = cfg.getPerPlayerBalloonCap();
+                int slotsLeft    = maxAllowed - currentCount;
 
-            if (rng.nextDouble() > cfg.getSpawnChance()) continue;
-
-            Location playerLoc  = player.getLocation().clone();
-            double   radius     = cfg.getSpawnRadius();
-            UUID     playerUUID = player.getUniqueId();
-
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                Location candidate = calculateSpawnLocation(playerLoc, radius);
-                if (candidate == null) return;
-
-                if (plugin.isDebugMode()) {
-                    String msg = plugin.getConfigManager().getMsgDebugSpawn(
-                            candidate.getX(), candidate.getY(), candidate.getZ(),
-                            candidate.getWorld().getName());
-                    Bukkit.getScheduler().runTask(plugin, () ->
-                            Bukkit.getOnlinePlayers().stream()
-                                    .filter(p -> p.hasPermission("easter.admin"))
-                                    .forEach(p -> p.sendMessage(msg)));
+                if (slotsLeft <= 0) {
+                    if (plugin.isDebugMode()) player.sendMessage(cfg.getMsgCapReached());
+                    return;
                 }
 
-                Bukkit.getScheduler().runTask(plugin, () -> spawnBalloon(candidate, playerUUID));
-            });
+                int minSpawn     = cfg.getPerPlayerMin();
+                int clampedMin   = Math.min(minSpawn, slotsLeft);
+                int range        = slotsLeft - clampedMin;
+                int attemptCount = clampedMin + (range > 0 ? rng.nextInt(range + 1) : 0);
+
+                Location playerLoc  = player.getLocation().clone();
+                double   radius     = cfg.getSpawnRadius();
+                UUID     playerUUID = player.getUniqueId();
+
+                // notifyFlag: pastikan notify hanya dikirim sekali per siklus per player
+                AtomicBoolean notified       = new AtomicBoolean(false);
+                // Counter untuk tahu berapa yang benar-benar berhasil spawn
+                AtomicInteger spawnedCount   = new AtomicInteger(0);
+
+                for (int j = 0; j < attemptCount; j++) {
+                    final long spawnDelay = j * 2L;
+
+                    Bukkit.getScheduler().runTaskLater(plugin, () ->
+                            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                                Location candidate = calculateSpawnLocation(playerLoc, radius, cfg);
+                                if (candidate == null) return;
+
+                                if (plugin.isDebugMode()) {
+                                    String msg = cfg.getMsgDebugSpawn(
+                                            candidate.getX(), candidate.getY(), candidate.getZ(),
+                                            candidate.getWorld().getName());
+                                    Bukkit.getScheduler().runTask(plugin, () ->
+                                            Bukkit.getOnlinePlayers().stream()
+                                                    .filter(p -> p.hasPermission("easter.admin"))
+                                                    .forEach(p -> p.sendMessage(msg)));
+                                }
+
+                                Bukkit.getScheduler().runTask(plugin, () -> {
+                                    boolean spawned = spawnBalloon(candidate, playerUUID);
+
+                                    if (spawned) {
+                                        spawnedCount.incrementAndGet();
+                                        // Notify hanya sekali, saat balloon pertama berhasil spawn
+                                        if (notified.compareAndSet(false, true) && player.isOnline()) {
+                                            plugin.getNotifyManager().notifyPlayer(player);
+                                        }
+                                    }
+                                });
+                            }), spawnDelay);
+                }
+
+            }, playerDelay);
         }
     }
 
-    private Location calculateSpawnLocation(Location origin, double radius) {
-        for (int attempt = 0; attempt < 10; attempt++) {
+    private Location calculateSpawnLocation(Location origin, double radius, ConfigManager cfg) {
+        int minY     = cfg.getSpawnMinY();
+        int floatMin = cfg.getFloatHeightMin();
+        int floatMax = cfg.getFloatHeightMax();
+
+        for (int attempt = 0; attempt < 15; attempt++) {
             double angle   = rng.nextDouble() * 2 * Math.PI;
             double dist    = radius * 0.3 + rng.nextDouble() * radius * 0.7;
             double offsetX = Math.cos(angle) * dist;
             double offsetZ = Math.sin(angle) * dist;
 
-            Location check = origin.clone().add(offsetX, 5, offsetZ);
+            Location check = origin.clone().add(offsetX, 0, offsetZ);
+            int highestY   = origin.getWorld().getHighestBlockYAt(check);
+            check.setY(highestY);
 
-            for (int dy = 0; dy <= 10; dy++) {
-                Location surface = check.clone().subtract(0, dy, 0);
-                if (!surface.getBlock().getType().isAir()) {
-                    return surface.add(0, 1, 0);
-                }
-            }
+            if (highestY < minY) continue;
+
+            check = skipFoliage(check);
+            if (check == null) continue;
+
+            Location surface = check.clone().add(0, 1, 0);
+            if (surface.getBlock().getType() != Material.AIR) continue;
+
+            int floatHeight = floatMin + (floatMax > floatMin ? rng.nextInt(floatMax - floatMin + 1) : 0);
+            surface.add(0, floatHeight, 0);
+
+            return surface;
         }
         return null;
     }
 
-    private void spawnBalloon(Location loc, UUID playerUUID) {
+    private Location skipFoliage(Location surface) {
+        Location current = surface.clone();
+        int maxClimb = 20;
+
+        for (int i = 0; i < maxClimb; i++) {
+            Material type = current.getBlock().getType();
+
+            boolean isFoliage = Tag.LEAVES.isTagged(type)
+                    || Tag.LOGS.isTagged(type)
+                    || Tag.SAPLINGS.isTagged(type)
+                    || type == Material.VINE
+                    || type == Material.BAMBOO
+                    || type == Material.SUGAR_CANE
+                    || type.name().contains("LEAVES")
+                    || type.name().contains("LOG");
+
+            if (!isFoliage) return current;
+            current = current.clone().add(0, 1, 0);
+        }
+        return null;
+    }
+
+    private boolean spawnBalloon(Location loc, UUID playerUUID) {
         ConfigManager cfg = plugin.getConfigManager();
 
         if (cfg.isCheckPerPlayer()) {
-            int currentCount = plugin.getBalloonTracker().getPlayerBalloonCount(playerUUID);
-            if (currentCount >= cfg.getPerPlayerBalloonCap()) return;
+            if (plugin.getBalloonTracker().getPlayerBalloonCount(playerUUID) >= cfg.getPerPlayerBalloonCap()) return false;
         } else {
             int globalCap = cfg.getGlobalBalloonCap();
-            if (globalCap != -1 && plugin.getBalloonTracker().getActiveCount() >= globalCap) return;
+            if (globalCap != -1 && plugin.getBalloonTracker().getActiveCount() >= globalCap) return false;
         }
 
         if (MythicBukkit.inst().getMobManager().getMythicMob(cfg.getMythicMobId()).isEmpty()) {
             plugin.getLogger().warning("MythicMob '" + cfg.getMythicMobId() + "' tidak ditemukan!");
-            return;
+            return false;
         }
 
         Entity entity;
@@ -121,11 +184,12 @@ public class BalloonSpawnTask extends BukkitRunnable {
             entity = api.spawnMythicMob(cfg.getMythicMobId(), loc);
         } catch (Exception e) {
             plugin.getLogger().warning("Gagal spawn MythicMob: " + e.getMessage());
-            return;
+            return false;
         }
 
-        if (entity == null) return;
+        if (entity == null) return false;
 
         plugin.getBalloonTracker().register(entity.getUniqueId(), playerUUID);
+        return true;
     }
 }

@@ -12,40 +12,46 @@ balloon:
   # PENGATURAN SPAWN
   # --------------------------------------------------
 
-  # Seberapa sering task spawn berjalan, dalam satuan MENIT.
-  spawn-interval-minutes: 2
-
-  # Jumlah maksimal player yang dicek per satu siklus task.
-  # Mencegah lag saat banyak player online.
-  max-spawns-per-batch: 2
-
-  # Radius horizontal (dalam blok) di sekitar player untuk spawn.
-  spawn-radius: 24.0
-
-  # Probabilitas spawn berhasil per siklus (0.0 - 1.0).
+  spawn-interval-minutes: 1
+  spawn-radius: 12.0
   spawn-chance: 0.50
+
+  # Daftar world yang DINONAKTIFKAN untuk spawn balon.
+  # Kosongkan list untuk mengaktifkan di semua world.
+  disabled-worlds:
+    - "world_nether"
+    - "world_the_end"
+
+  # --------------------------------------------------
+  # KETINGGIAN BALON
+  # --------------------------------------------------
+
+  # Ketinggian minimum balon melayang di atas permukaan blok (blok).
+  float-height-min: 3
+
+  # Ketinggian maksimum balon melayang di atas permukaan blok (blok).
+  float-height-max: 5
+
+  # Minimum Y absolut di dunia. Balon tidak akan spawn di bawah nilai ini.
+  # Berguna untuk mencegah spawn di dalam goa.
+  # Set ke nilai sangat rendah (misal -64) untuk menonaktifkan.
+  spawn-min-y: 60
 
   # --------------------------------------------------
   # BATAS JUMLAH BALON (CAP)
   # --------------------------------------------------
 
-  # Batas maksimal balon aktif di seluruh server.
-  # Set -1 untuk unlimited (tidak ada batas global).
   global-cap: 20
 
-  # Batas maksimal balon aktif per player.
-  # Hanya berlaku jika cap-check-per-player: true.
-  per-player-cap: 3
+  # Jumlah MAKSIMAL balon yang bisa spawn di dekat satu player per siklus.
+  per-player-cap: 5
 
-  # true  → batas dihitung per player (pakai per-player-cap).
-  # false → batas dihitung global (pakai global-cap).
+  # Jumlah MINIMAL balon yang di-attempt spawn per player per siklus.
+  # Plugin akan random antara per-player-min dan per-player-cap.
+  # Contoh: min 1, cap 5 → random 1-5 balon per player per siklus.
+  per-player-min: 1
+
   cap-check-per-player: true
-
-  # --------------------------------------------------
-  # DESPAWN OTOMATIS
-  # --------------------------------------------------
-
-  # Detik sebelum balon yang tidak ditembak otomatis despawn.
   despawn-seconds: 60
 
   # --------------------------------------------------
@@ -60,6 +66,47 @@ balloon:
   #   VANILLA:<MATERIAL>        contoh: VANILLA:STICK
   #   MMOITEMS:<TYPE>:<ID>      contoh: MMOITEMS:SWORD:EASTER_LANCE
   required-item: "VANILLA:STICK"
+
+  # --------------------------------------------------
+  # NOTIFIKASI SPAWN KE PLAYER
+  # --------------------------------------------------
+
+  # Apakah player mendapat notifikasi saat balon spawn di dekatnya.
+  notify-on-spawn: true
+
+  # Tipe notifikasi, bisa satu atau kombinasi beberapa.
+  # Pilihan: CHAT, ACTIONBAR, BOSSBAR
+  notify-type:
+    - BOSSBAR
+    - CHAT
+
+  # Khusus BOSSBAR: warna boss bar.
+  # Pilihan: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  bossbar-color: PINK
+
+  # Khusus BOSSBAR: style boss bar.
+  # Pilihan: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
+  bossbar-style: SOLID
+
+  # Berapa detik boss bar / action bar ditampilkan setelah balon spawn.
+  notify-duration-seconds: 10
+
+  # --------------------------------------------------
+  # SOUND NOTIFIKASI
+  # --------------------------------------------------
+
+  # Apakah sound diputar saat notifikasi dikirim ke player.
+  notify-sound-enabled: true
+
+  # Nama sound dari Bukkit Sound enum.
+  # Referensi: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
+  notify-sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
+
+  # Volume sound (0.0 - 1.0+). Angka lebih besar = lebih keras.
+  notify-sound-volume: 1.0
+
+  # Pitch sound (0.5 - 2.0). 1.0 = normal, lebih kecil = lebih rendah.
+  notify-sound-pitch: 1.2
 
   # --------------------------------------------------
   # REWARD & ANNOUNCE

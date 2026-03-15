@@ -7,6 +7,7 @@ prefix: "&d[EasterEvent] &r"
 no-permission: "&cMaaf, kamu tidak diizinkan menggunakan perintah ini."
 not-player: "&cPerintah ini hanya untuk pemain."
 unknown-subcommand: "&7Gunakan: &d/easter <reload|spawn|debug|status>"
+player-not-found: "&cPlayer &e{name} &ctidak ditemukan atau sedang offline."
 
 reload:
   success: "&aKonfigurasi berhasil diperbarui."
@@ -26,12 +27,18 @@ cap-reached: "&eSpawn skipped: &7Limit tercapai untuk pemain ini."
 
 item-mismatch: "&dGunakan item khusus untuk memecahkan balon ini!"
 
+notify-spawn:
+  chat: "&d✦ Easter Balloon &fmuncul di dekatmu! Cepat cari dan pecahkan!"
+  actionbar: "&d✦ Easter Balloon muncul di dekatmu!"
+  bossbar: "&d✦ Easter Balloon muncul di dekatmu!"
+
 balloon:
   popped:
     - ""
     - "&d&m                    &r&d Easter Event &d&m                    "
     - ""
     - "  &f✦ &e{player} &fberhasil memecahkan &dEaster Balloon&f!"
+    - "  &7Siapa giliran berikutnya?"
     - ""
     - "&d&m                                                    "
     - ""
@@ -41,11 +48,7 @@ status:
   check-mode: "&fCap Mode: &e{mode}"
   global: "&fGlobal Active: &d{active}&f / &d{cap}"
   per-player: "&f  &d{player}&f: &e{active}&f / &e{cap}"
-
   player-header: "&d--- Balon Milik {player} ({active}/{cap}) ---"
-
   player-entry: "&f  &e#{index} &7@ &f{x}, {y}, {z} &7[{world}] &d&n[Teleport]"
-
   player-entry-hover: "&fKlik untuk teleport ke &e{x}, {y}, {z}"
-
   player-none: "&7Tidak ada balon aktif milikmu saat ini."

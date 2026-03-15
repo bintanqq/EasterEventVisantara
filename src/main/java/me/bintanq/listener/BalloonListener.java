@@ -19,10 +19,14 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BalloonListener implements Listener {
 
     private final EasterEventVisantara plugin;
+
+    // Simpan last attacker manual karena EntityDeathEvent kadang tidak set killer dengan benar
+    private final ConcurrentHashMap<UUID, UUID> lastAttacker = new ConcurrentHashMap<>();
 
     public BalloonListener(EasterEventVisantara plugin) {
         this.plugin = plugin;
@@ -55,6 +59,9 @@ public class BalloonListener implements Listener {
         } else if (plugin.isDebugMode()) {
             player.sendMessage(cfg.getMsgDebugHit(entityUUID.toString(), "any (no requirement)", true));
         }
+
+        // Catat attacker terakhir sebagai fallback untuk death event
+        lastAttacker.put(entityUUID, player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -69,7 +76,17 @@ public class BalloonListener implements Listener {
 
         plugin.getBalloonTracker().unregister(uuid);
 
+        // Prioritaskan killer dari event, fallback ke lastAttacker map
         Player killer = entity.getKiller();
+        if (killer == null) {
+            UUID lastUUID = lastAttacker.remove(uuid);
+            if (lastUUID != null) {
+                killer = Bukkit.getPlayer(lastUUID);
+            }
+        } else {
+            lastAttacker.remove(uuid);
+        }
+
         String killerName = (killer != null) ? killer.getName() : "Unknown";
 
         ConfigManager cfg = plugin.getConfigManager();

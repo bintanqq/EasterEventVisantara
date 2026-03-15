@@ -29,7 +29,6 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
 
     private static final String PERMISSION = "easter.admin";
     private static final List<String> SUB_COMMANDS = Arrays.asList("reload", "spawn", "debug", "status");
-    private static final List<String> STATUS_SUB = Arrays.asList("player");
 
     private final EasterEventVisantara plugin;
 
@@ -69,12 +68,13 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(!current ? cfg.getMsgDebugEnabled() : cfg.getMsgDebugDisabled());
             }
             case "status" -> {
-                if (args.length >= 2 && args[1].equalsIgnoreCase("player")) {
-                    if (!(sender instanceof Player player)) {
-                        sender.sendMessage(cfg.getMsgNotPlayer());
+                if (args.length >= 2) {
+                    Player target = Bukkit.getPlayerExact(args[1]);
+                    if (target == null) {
+                        sender.sendMessage(cfg.getMsgPlayerNotFound(args[1]));
                         return true;
                     }
-                    handleStatusPlayer(player, cfg);
+                    handleStatusPlayer(sender, target, cfg);
                 } else {
                     handleStatus(sender, cfg);
                 }
@@ -122,8 +122,7 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
 
         if (cfg.isCheckPerPlayer()) {
             for (Player p : Bukkit.getOnlinePlayers()) {
-                UUID uuid  = p.getUniqueId();
-                int  count = tracker.getPlayerBalloonCount(uuid);
+                int count = tracker.getPlayerBalloonCount(p.getUniqueId());
                 if (count > 0) {
                     sender.sendMessage(cfg.getMsgStatusPerPlayer(p.getName(), count, cfg.getPerPlayerBalloonCap()));
                 }
@@ -131,14 +130,14 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void handleStatusPlayer(Player sender, ConfigManager cfg) {
+    private void handleStatusPlayer(CommandSender sender, Player target, ConfigManager cfg) {
         BalloonTracker tracker = plugin.getBalloonTracker();
         Map<UUID, UUID> ownerMap = tracker.getBalloonOwnerMap();
 
-        UUID senderUUID = sender.getUniqueId();
-        int count = tracker.getPlayerBalloonCount(senderUUID);
+        UUID targetUUID = target.getUniqueId();
+        int count = tracker.getPlayerBalloonCount(targetUUID);
 
-        sender.sendMessage(cfg.getMsgStatusPlayerHeader(sender.getName(), count, cfg.getPerPlayerBalloonCap()));
+        sender.sendMessage(cfg.getMsgStatusPlayerHeader(target.getName(), count, cfg.getPerPlayerBalloonCap()));
 
         if (count == 0) {
             sender.sendMessage(cfg.getMsgStatusPlayerNone());
@@ -147,11 +146,10 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
 
         int index = 1;
         for (Map.Entry<UUID, UUID> entry : ownerMap.entrySet()) {
-            if (!entry.getValue().equals(senderUUID)) continue;
+            if (!entry.getValue().equals(targetUUID)) continue;
 
             UUID entityUUID = entry.getKey();
             Location loc = tracker.getBalloonLocation(entityUUID);
-
             if (loc == null) continue;
 
             int x = loc.getBlockX();
@@ -159,14 +157,20 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
             int z = loc.getBlockZ();
             String world = loc.getWorld().getName();
 
-            String tpCmd = "/tp " + sender.getName() + " " + x + " " + y + " " + z;
+            // Gunakan /tp x y z tanpa nama player agar tidak double teleport
+            String tpCmd = "/tp " + x + " " + y + " " + z;
 
             TextComponent line = new TextComponent(cfg.getMsgStatusPlayerEntry(index, x, y, z, world));
             line.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCmd));
             line.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                     new ComponentBuilder(cfg.getMsgStatusPlayerEntryHover(x, y, z)).create()));
 
-            sender.spigot().sendMessage(line);
+            if (sender instanceof Player playerSender) {
+                playerSender.spigot().sendMessage(line);
+            } else {
+                sender.sendMessage(cfg.getMsgStatusPlayerEntry(index, x, y, z, world));
+            }
+
             index++;
         }
     }
@@ -174,13 +178,20 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission(PERMISSION)) return Collections.emptyList();
+
         if (args.length == 1) {
             String partial = args[0].toLowerCase();
             return SUB_COMMANDS.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
         }
+
         if (args.length == 2 && args[0].equalsIgnoreCase("status")) {
-            return STATUS_SUB.stream().filter(s -> s.startsWith(args[1].toLowerCase())).collect(Collectors.toList());
+            String partial = args[1].toLowerCase();
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase().startsWith(partial))
+                    .collect(Collectors.toList());
         }
+
         return Collections.emptyList();
     }
 }
