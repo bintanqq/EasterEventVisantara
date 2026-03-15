@@ -3,121 +3,70 @@
 # =====================================================
 
 balloon:
-
-  # ID MythicMob yang akan di-spawn sebagai balon.
-  # Pastikan ID ini terdaftar di folder MythicMobs/Mobs/.
   mythicmob-id: "EasterBalloon"
 
-  # --------------------------------------------------
-  # PENGATURAN SPAWN
-  # --------------------------------------------------
-
+  # ── Spawn ─────────────────────────────────────────
+  # How often the spawn cycle runs (minutes).
   spawn-interval-minutes: 1
+  # Horizontal radius around each player to attempt spawning.
   spawn-radius: 12.0
+  # Probability (0.0–1.0) that a spawn attempt succeeds per player per cycle.
   spawn-chance: 0.50
-
-  # Daftar world yang DINONAKTIFKAN untuk spawn balon.
-  # Kosongkan list untuk mengaktifkan di semua world.
+  # Worlds where balloon spawning is disabled.
   disabled-worlds:
     - "world_nether"
     - "world_the_end"
 
-  # --------------------------------------------------
-  # KETINGGIAN BALON
-  # --------------------------------------------------
-
-  # Ketinggian minimum balon melayang di atas permukaan blok (blok).
+  # ── Float Height ──────────────────────────────────
+  # Random float height range above the surface (blocks).
   float-height-min: 3
-
-  # Ketinggian maksimum balon melayang di atas permukaan blok (blok).
   float-height-max: 5
-
-  # Minimum Y absolut di dunia. Balon tidak akan spawn di bawah nilai ini.
-  # Berguna untuk mencegah spawn di dalam goa.
-  # Set ke nilai sangat rendah (misal -64) untuk menonaktifkan.
+  # Minimum world Y for a valid spawn point (prevents underground spawns).
   spawn-min-y: 60
 
-  # --------------------------------------------------
-  # BATAS JUMLAH BALON (CAP)
-  # --------------------------------------------------
-
+  # ── Cap ───────────────────────────────────────────
+  # Max balloons active server-wide. Set -1 for unlimited.
   global-cap: 20
-
-  # Jumlah MAKSIMAL balon yang bisa spawn di dekat satu player per siklus.
+  # Max balloons per player. Used when cap-check-per-player is true.
   per-player-cap: 5
-
-  # Jumlah MINIMAL balon yang di-attempt spawn per player per siklus.
-  # Plugin akan random antara per-player-min dan per-player-cap.
-  # Contoh: min 1, cap 5 → random 1-5 balon per player per siklus.
+  # Min balloons attempted per player per cycle. Randomised between min and cap.
   per-player-min: 1
-
+  # true = enforce cap per player | false = enforce global cap.
   cap-check-per-player: true
+  # Seconds before an un-popped balloon auto-despawns.
   despawn-seconds: 60
 
-  # --------------------------------------------------
-  # PERSYARATAN ITEM
-  # --------------------------------------------------
-
-  # true  → player harus memegang item tertentu untuk memencet balon.
-  # false → balon bisa dipencet dengan item apapun.
+  # ── Item Requirement ──────────────────────────────
+  # Require a specific item to pop the balloon.
   require-specific-item: false
-
-  # Format:
-  #   VANILLA:<MATERIAL>        contoh: VANILLA:STICK
-  #   MMOITEMS:<TYPE>:<ID>      contoh: MMOITEMS:SWORD:EASTER_LANCE
+  # Formats: VANILLA:<MATERIAL> | MMOITEMS:<TYPE>:<ID>
   required-item: "VANILLA:STICK"
 
-  # --------------------------------------------------
-  # NOTIFIKASI SPAWN KE PLAYER
-  # --------------------------------------------------
-
-  # Apakah player mendapat notifikasi saat balon spawn di dekatnya.
+  # ── Notification ──────────────────────────────────
+  # Send a notification to a player when a balloon spawns near them.
   notify-on-spawn: true
-
-  # Tipe notifikasi, bisa satu atau kombinasi beberapa.
-  # Pilihan: CHAT, ACTIONBAR, BOSSBAR
+  # Notification types. Options: CHAT, ACTIONBAR, BOSSBAR (can combine).
   notify-type:
     - BOSSBAR
     - CHAT
-
-  # Khusus BOSSBAR: warna boss bar.
-  # Pilihan: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  # BossBar color: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
   bossbar-color: PINK
-
-  # Khusus BOSSBAR: style boss bar.
-  # Pilihan: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
+  # BossBar style: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
   bossbar-style: SOLID
-
-  # Berapa detik boss bar / action bar ditampilkan setelah balon spawn.
+  # How long (seconds) the bossbar/actionbar notification stays visible.
   notify-duration-seconds: 10
 
-  # --------------------------------------------------
-  # SOUND NOTIFIKASI
-  # --------------------------------------------------
-
-  # Apakah sound diputar saat notifikasi dikirim ke player.
+  # ── Sound ─────────────────────────────────────────
   notify-sound-enabled: true
-
-  # Nama sound dari Bukkit Sound enum.
-  # Referensi: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
+  # Reference: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
   notify-sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
-
-  # Volume sound (0.0 - 1.0+). Angka lebih besar = lebih keras.
   notify-sound-volume: 1.0
-
-  # Pitch sound (0.5 - 2.0). 1.0 = normal, lebih kecil = lebih rendah.
   notify-sound-pitch: 1.2
 
-  # --------------------------------------------------
-  # REWARD & ANNOUNCE
-  # --------------------------------------------------
-
-  # true  → pesan pop di-broadcast ke seluruh server.
-  # false → pesan pop hanya dikirim ke player yang memencet.
+  # ── Reward ────────────────────────────────────────
+  # true = broadcast pop message to all players | false = killer only.
   announce-global: true
-
-  # Command console saat balon berhasil dipencet.
-  # Gunakan %player% sebagai placeholder nama player.
+  # Console commands on pop. Use %player% as the killer's name.
   reward-commands:
     - "give %player% minecraft:egg 3"
     - "eco give %player% 50"

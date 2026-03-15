@@ -38,9 +38,8 @@ public class BalloonSpawnTask extends BukkitRunnable {
         for (int i = 0; i < players.size(); i++) {
             final Player player = players.get(i);
 
-            // Spread tiap player ke tick yang berbeda — player ke-i diproses di tick ke-i
-            // Jadi dengan 50 player, beban tersebar ke 50 tick, bukan satu tick
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (isCancelled()) return;
                 if (!player.isOnline()) return;
                 if (disabledWorlds.contains(player.getWorld().getName())) return;
 
@@ -60,24 +59,21 @@ public class BalloonSpawnTask extends BukkitRunnable {
                     return;
                 }
 
-                int minSpawn   = cfg.getPerPlayerMin();
-                int clampedMin = Math.min(minSpawn, slotsLeft);
-                int range      = slotsLeft - clampedMin;
+                int clampedMin   = Math.min(cfg.getPerPlayerMin(), slotsLeft);
+                int range        = slotsLeft - clampedMin;
                 int attemptCount = clampedMin + (range > 0 ? rng.nextInt(range + 1) : 0);
 
-                Location playerLoc = player.getLocation().clone();
-                double   radius    = cfg.getSpawnRadius();
+                Location playerLoc  = player.getLocation().clone();
+                double   radius     = cfg.getSpawnRadius();
                 UUID     playerUUID = player.getUniqueId();
-
                 AtomicBoolean notified = new AtomicBoolean(false);
 
-                // Spread tiap attempt balloon ke tick berbeda juga
                 for (int j = 0; j < attemptCount; j++) {
                     final long attemptDelay = j * 2L;
 
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        // Pre-kalkulasi offset (murni math, aman di mana saja)
-                        // tapi world read tetap di sini karena kita sudah di main thread
+                        if (isCancelled()) return;
+
                         Location candidate = calculateSpawnLocation(playerLoc, radius, cfg);
                         if (candidate == null) return;
 
@@ -94,10 +90,8 @@ public class BalloonSpawnTask extends BukkitRunnable {
                         if (spawned && notified.compareAndSet(false, true) && player.isOnline()) {
                             plugin.getNotifyManager().notifyPlayer(player);
                         }
-
                     }, attemptDelay);
                 }
-
             }, (long) i);
         }
     }
@@ -135,9 +129,8 @@ public class BalloonSpawnTask extends BukkitRunnable {
 
     private Location skipFoliage(Location surface) {
         Location current = surface.clone();
-        int maxClimb = 20;
 
-        for (int i = 0; i < maxClimb; i++) {
+        for (int i = 0; i < 20; i++) {
             Material type = current.getBlock().getType();
 
             boolean isFoliage = Tag.LEAVES.isTagged(type)
@@ -166,7 +159,7 @@ public class BalloonSpawnTask extends BukkitRunnable {
         }
 
         if (MythicBukkit.inst().getMobManager().getMythicMob(cfg.getMythicMobId()).isEmpty()) {
-            plugin.getLogger().warning("MythicMob '" + cfg.getMythicMobId() + "' tidak ditemukan!");
+            plugin.getLogger().warning("MythicMob '" + cfg.getMythicMobId() + "' not found!");
             return false;
         }
 
@@ -175,7 +168,7 @@ public class BalloonSpawnTask extends BukkitRunnable {
             BukkitAPIHelper api = MythicBukkit.inst().getAPIHelper();
             entity = api.spawnMythicMob(cfg.getMythicMobId(), loc);
         } catch (Exception e) {
-            plugin.getLogger().warning("Gagal spawn MythicMob: " + e.getMessage());
+            plugin.getLogger().warning("Failed to spawn MythicMob: " + e.getMessage());
             return false;
         }
 

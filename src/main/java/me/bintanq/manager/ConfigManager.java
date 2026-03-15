@@ -30,7 +30,6 @@ public class ConfigManager {
     private FileConfiguration loadFile(String name) {
         File file = new File(plugin.getDataFolder(), name);
         if (!file.exists()) plugin.saveResource(name, false);
-
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         InputStream stream = plugin.getResource(name);
         if (stream != null) {
@@ -53,7 +52,6 @@ public class ConfigManager {
         return getPrefix() + msg(path, fallback);
     }
 
-    // config.yml getters
     public String getMythicMobId()          { return config.getString("balloon.mythicmob-id", "EasterBalloon"); }
     public int    getSpawnIntervalMinutes() { return config.getInt("balloon.spawn-interval-minutes", 2); }
     public double getSpawnRadius()          { return config.getDouble("balloon.spawn-radius", 24.0); }
@@ -82,24 +80,24 @@ public class ConfigManager {
     public double getNotifySoundPitch()     { return config.getDouble("balloon.notify-sound-pitch", 1.2); }
 
     public String getPrefix()               { return msg("prefix", "&d[EasterEvent] &r"); }
-    public String getMsgReloadSuccess()     { return prefixed("reload.success", "&aKonfigurasi berhasil diperbarui."); }
-    public String getMsgNoPermission()      { return prefixed("no-permission", "&cKamu tidak punya izin."); }
-    public String getMsgNotPlayer()         { return prefixed("not-player", "&cHanya player yang bisa menjalankan command ini."); }
-    public String getMsgUnknownSubcommand() { return prefixed("unknown-subcommand", "&7Gunakan: &d/easter <reload|spawn|debug|status>"); }
-    public String getMsgDebugEnabled()      { return prefixed("debug.enabled", "&dDebug mode: &aON"); }
-    public String getMsgDebugDisabled()     { return prefixed("debug.disabled", "&dDebug mode: &cOFF"); }
-    public String getMsgSpawnSuccess()      { return prefixed("spawn.success", "&bEaster Balloon &fberhasil dimunculkan."); }
-    public String getMsgSpawnFailed()       { return prefixed("spawn.failed", "&cGagal memunculkan balon, cek console."); }
-    public String getMsgItemMismatch()      { return prefixed("item-mismatch", "&dGunakan item khusus untuk memecahkan balon ini!"); }
-    public String getMsgCapReached()        { return prefixed("cap-reached", "&eSpawn skipped: &7Limit tercapai untuk pemain ini."); }
+    public String getMsgReloadSuccess()     { return prefixed("reload.success", "&aConfiguration reloaded."); }
+    public String getMsgNoPermission()      { return prefixed("no-permission", "&cNo permission."); }
+    public String getMsgNotPlayer()         { return prefixed("not-player", "&cPlayers only."); }
+    public String getMsgUnknownSubcommand() { return prefixed("unknown-subcommand", "&7Usage: &d/easter <reload|spawn|debug|status>"); }
+    public String getMsgDebugEnabled()      { return prefixed("debug.enabled", "&dDebug: &aON"); }
+    public String getMsgDebugDisabled()     { return prefixed("debug.disabled", "&dDebug: &cOFF"); }
+    public String getMsgSpawnSuccess()      { return prefixed("spawn.success", "&bEaster Balloon &fspawned."); }
+    public String getMsgSpawnFailed()       { return prefixed("spawn.failed", "&cFailed to spawn balloon."); }
+    public String getMsgItemMismatch()      { return prefixed("item-mismatch", "&cWrong item!"); }
+    public String getMsgCapReached()        { return prefixed("cap-reached", "&eSpawn skipped: cap reached."); }
     public String getMsgStatusHeader()      { return prefixed("status.header", "&d--- Easter Status ---"); }
-    public String getMsgStatusPlayerNone()  { return prefixed("status.player-none", "&7Tidak ada balon aktif saat ini."); }
-    public String getMsgNotifyChat()        { return color(messages.getString("notify-spawn.chat", "&d✦ Easter Balloon &fmuncul di dekatmu!")); }
-    public String getMsgNotifyActionBar()   { return color(messages.getString("notify-spawn.actionbar", "&d✦ Easter Balloon muncul di dekatmu!")); }
-    public String getMsgNotifyBossBar()     { return color(messages.getString("notify-spawn.bossbar", "&d✦ Easter Balloon muncul di dekatmu!")); }
+    public String getMsgStatusPlayerNone()  { return prefixed("status.player-none", "&7No active balloons."); }
+    public String getMsgNotifyChat()        { return color(messages.getString("notify-spawn.chat", "&d✦ Easter Balloon nearby!")); }
+    public String getMsgNotifyActionBar()   { return color(messages.getString("notify-spawn.actionbar", "&d✦ Easter Balloon nearby!")); }
+    public String getMsgNotifyBossBar()     { return color(messages.getString("notify-spawn.bossbar", "&d✦ Easter Balloon nearby!")); }
 
     public String getMsgPlayerNotFound(String name) {
-        String raw = messages.getString("player-not-found", "&cPlayer &e{name} &ctidak ditemukan atau sedang offline.");
+        String raw = messages.getString("player-not-found", "&cPlayer &e{name} &cnot found.");
         return color(raw.replace("{name}", name));
     }
 
@@ -117,7 +115,7 @@ public class ConfigManager {
 
     public String getMsgStatusGlobal(int active, int cap) {
         String capStr = (cap == -1) ? "∞" : String.valueOf(cap);
-        String raw = messages.getString("status.global", "&fGlobal Active: &d{active}&f / &d{cap}");
+        String raw = messages.getString("status.global", "&fGlobal: &d{active}&f / &d{cap}");
         return color(raw.replace("{active}", String.valueOf(active)).replace("{cap}", capStr));
     }
 
@@ -130,7 +128,7 @@ public class ConfigManager {
     }
 
     public String getMsgStatusPlayerHeader(String playerName, int active, int cap) {
-        String raw = messages.getString("status.player-header", "&d--- Balon Milik {player} ({active}/{cap}) ---");
+        String raw = messages.getString("status.player-header", "&d--- {player}'s Balloons ({active}/{cap}) ---");
         return color(raw
                 .replace("{player}", playerName)
                 .replace("{active}", String.valueOf(active))
@@ -149,7 +147,7 @@ public class ConfigManager {
     }
 
     public String getMsgStatusPlayerEntryHover(int x, int y, int z) {
-        String raw = messages.getString("status.player-entry-hover", "&fKlik untuk teleport ke &e{x}, {y}, {z}");
+        String raw = messages.getString("status.player-entry-hover", "&fClick to teleport to &e{x}, {y}, {z}");
         return color(raw
                 .replace("{x}", String.valueOf(x))
                 .replace("{y}", String.valueOf(y))
@@ -177,7 +175,7 @@ public class ConfigManager {
 
     public String getMsgDebugDespawn(String entityId) {
         String raw = messages.getString("debug.despawn-info",
-                "&7[DEBUG] &fEntity: &e{entity} &fdespawned (timeout).");
+                "&7[DEBUG] &fEntity: &e{entity} &fdespawned.");
         return color(raw.replace("{entity}", entityId));
     }
 }

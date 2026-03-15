@@ -56,10 +56,7 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(plugin.getConfigManager().getMsgReloadSuccess());
             }
             case "spawn" -> {
-                if (!(sender instanceof Player player)) {
-                    sender.sendMessage(cfg.getMsgNotPlayer());
-                    return true;
-                }
+                if (!(sender instanceof Player player)) { sender.sendMessage(cfg.getMsgNotPlayer()); return true; }
                 handleSpawn(player, cfg);
             }
             case "debug" -> {
@@ -70,10 +67,7 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
             case "status" -> {
                 if (args.length >= 2) {
                     Player target = Bukkit.getPlayerExact(args[1]);
-                    if (target == null) {
-                        sender.sendMessage(cfg.getMsgPlayerNotFound(args[1]));
-                        return true;
-                    }
+                    if (target == null) { sender.sendMessage(cfg.getMsgPlayerNotFound(args[1])); return true; }
                     handleStatusPlayer(sender, target, cfg);
                 } else {
                     handleStatus(sender, cfg);
@@ -90,24 +84,20 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
 
         if (MythicBukkit.inst().getMobManager().getMythicMob(mobId).isEmpty()) {
             player.sendMessage(cfg.getMsgSpawnFailed());
-            plugin.getLogger().warning("/easter spawn gagal — MythicMob '" + mobId + "' tidak ditemukan.");
+            plugin.getLogger().warning("/easter spawn failed — MythicMob '" + mobId + "' not found.");
             return;
         }
 
         Entity entity;
         try {
-            BukkitAPIHelper api = MythicBukkit.inst().getAPIHelper();
-            entity = api.spawnMythicMob(mobId, player.getLocation());
+            entity = MythicBukkit.inst().getAPIHelper().spawnMythicMob(mobId, player.getLocation());
         } catch (Exception e) {
             player.sendMessage(cfg.getMsgSpawnFailed());
             plugin.getLogger().warning("/easter spawn exception: " + e.getMessage());
             return;
         }
 
-        if (entity == null) {
-            player.sendMessage(cfg.getMsgSpawnFailed());
-            return;
-        }
+        if (entity == null) { player.sendMessage(cfg.getMsgSpawnFailed()); return; }
 
         plugin.getBalloonTracker().register(entity.getUniqueId(), player.getUniqueId());
         player.sendMessage(cfg.getMsgSpawnSuccess());
@@ -123,9 +113,7 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
         if (cfg.isCheckPerPlayer()) {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 int count = tracker.getPlayerBalloonCount(p.getUniqueId());
-                if (count > 0) {
-                    sender.sendMessage(cfg.getMsgStatusPerPlayer(p.getName(), count, cfg.getPerPlayerBalloonCap()));
-                }
+                if (count > 0) sender.sendMessage(cfg.getMsgStatusPerPlayer(p.getName(), count, cfg.getPerPlayerBalloonCap()));
             }
         }
     }
@@ -139,37 +127,25 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
 
         sender.sendMessage(cfg.getMsgStatusPlayerHeader(target.getName(), count, cfg.getPerPlayerBalloonCap()));
 
-        if (count == 0) {
-            sender.sendMessage(cfg.getMsgStatusPlayerNone());
-            return;
-        }
+        if (count == 0) { sender.sendMessage(cfg.getMsgStatusPlayerNone()); return; }
 
         int index = 1;
         for (Map.Entry<UUID, UUID> entry : ownerMap.entrySet()) {
             if (!entry.getValue().equals(targetUUID)) continue;
 
-            UUID entityUUID = entry.getKey();
-            Location loc = tracker.getBalloonLocation(entityUUID);
+            Location loc = tracker.getBalloonLocation(entry.getKey());
             if (loc == null) continue;
 
-            int x = loc.getBlockX();
-            int y = loc.getBlockY();
-            int z = loc.getBlockZ();
+            int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
             String world = loc.getWorld().getName();
 
-            // Gunakan /tp x y z tanpa nama player agar tidak double teleport
-            String tpCmd = "/tp " + x + " " + y + " " + z;
-
             TextComponent line = new TextComponent(cfg.getMsgStatusPlayerEntry(index, x, y, z, world));
-            line.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCmd));
+            line.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tp " + x + " " + y + " " + z));
             line.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                     new ComponentBuilder(cfg.getMsgStatusPlayerEntryHover(x, y, z)).create()));
 
-            if (sender instanceof Player playerSender) {
-                playerSender.spigot().sendMessage(line);
-            } else {
-                sender.sendMessage(cfg.getMsgStatusPlayerEntry(index, x, y, z, world));
-            }
+            if (sender instanceof Player ps) ps.spigot().sendMessage(line);
+            else sender.sendMessage(cfg.getMsgStatusPlayerEntry(index, x, y, z, world));
 
             index++;
         }
@@ -180,15 +156,15 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
         if (!sender.hasPermission(PERMISSION)) return Collections.emptyList();
 
         if (args.length == 1) {
-            String partial = args[0].toLowerCase();
-            return SUB_COMMANDS.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
+            return SUB_COMMANDS.stream()
+                    .filter(s -> s.startsWith(args[0].toLowerCase()))
+                    .collect(Collectors.toList());
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("status")) {
-            String partial = args[1].toLowerCase();
             return Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
-                    .filter(name -> name.toLowerCase().startsWith(partial))
+                    .filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toList());
         }
 

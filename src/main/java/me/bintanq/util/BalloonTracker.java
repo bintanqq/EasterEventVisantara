@@ -16,8 +16,8 @@ public class BalloonTracker {
 
     private final EasterEventVisantara plugin;
 
-    private final ConcurrentHashMap<UUID, Long> activeBalloons     = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, UUID> balloonOwner       = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Long>    activeBalloons     = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, UUID>    balloonOwner       = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Integer> playerBalloonCount = new ConcurrentHashMap<>();
 
     private BukkitTask cleanupTask;
@@ -30,7 +30,6 @@ public class BalloonTracker {
         long despawnAt = System.currentTimeMillis()
                 + (plugin.getConfigManager().getDespawnSeconds() * 1000L);
         activeBalloons.put(entityUUID, despawnAt);
-
         if (ownerPlayerUUID != null) {
             balloonOwner.put(entityUUID, ownerPlayerUUID);
             playerBalloonCount.merge(ownerPlayerUUID, 1, Integer::sum);
@@ -38,8 +37,7 @@ public class BalloonTracker {
     }
 
     public void unregister(UUID entityUUID) {
-        activeBalloons.remove(entityUUID);
-
+        if (activeBalloons.remove(entityUUID) == null) return;
         UUID ownerUUID = balloonOwner.remove(entityUUID);
         if (ownerUUID != null) {
             playerBalloonCount.computeIfPresent(ownerUUID, (k, v) -> {
@@ -49,33 +47,16 @@ public class BalloonTracker {
         }
     }
 
-    public boolean isTracked(UUID entityUUID) {
-        return activeBalloons.containsKey(entityUUID);
-    }
-
-    public int getActiveCount() {
-        return activeBalloons.size();
-    }
-
-    public int getPlayerBalloonCount(UUID playerUUID) {
-        return playerBalloonCount.getOrDefault(playerUUID, 0);
-    }
-
-    public ConcurrentHashMap<UUID, Integer> getPlayerBalloonCountMap() {
-        return playerBalloonCount;
-    }
-
-    public Map<UUID, UUID> getBalloonOwnerMap() {
-        return balloonOwner;
-    }
+    public boolean isTracked(UUID entityUUID)                        { return activeBalloons.containsKey(entityUUID); }
+    public int getActiveCount()                                      { return activeBalloons.size(); }
+    public int getPlayerBalloonCount(UUID playerUUID)                { return playerBalloonCount.getOrDefault(playerUUID, 0); }
+    public Map<UUID, UUID> getBalloonOwnerMap()                      { return balloonOwner; }
+    public ConcurrentHashMap<UUID, Long> getActiveBalloons()         { return activeBalloons; }
+    public ConcurrentHashMap<UUID, Integer> getPlayerBalloonCountMap() { return playerBalloonCount; }
 
     public Location getBalloonLocation(UUID entityUUID) {
         Entity entity = Bukkit.getEntity(entityUUID);
         return (entity != null && !entity.isDead()) ? entity.getLocation() : null;
-    }
-
-    public ConcurrentHashMap<UUID, Long> getActiveBalloons() {
-        return activeBalloons;
     }
 
     public void startCleanupTask() {
@@ -91,14 +72,10 @@ public class BalloonTracker {
     }
 
     public void cancelCleanupTask() {
-        if (cleanupTask != null && !cleanupTask.isCancelled()) {
-            cleanupTask.cancel();
-        }
+        if (cleanupTask != null && !cleanupTask.isCancelled()) cleanupTask.cancel();
     }
 
     private void removeBalloon(UUID uuid) {
-        if (!activeBalloons.containsKey(uuid)) return;
-
         unregister(uuid);
 
         Entity entity = Bukkit.getEntity(uuid);

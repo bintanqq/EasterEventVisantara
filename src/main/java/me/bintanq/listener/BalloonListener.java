@@ -15,6 +15,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -24,8 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BalloonListener implements Listener {
 
     private final EasterEventVisantara plugin;
-
-    // Simpan last attacker manual karena EntityDeathEvent kadang tidak set killer dengan benar
     private final ConcurrentHashMap<UUID, UUID> lastAttacker = new ConcurrentHashMap<>();
 
     public BalloonListener(EasterEventVisantara plugin) {
@@ -43,9 +42,9 @@ public class BalloonListener implements Listener {
         ConfigManager cfg = plugin.getConfigManager();
 
         if (cfg.isRequireSpecificItem()) {
-            ItemStack held   = player.getInventory().getItemInMainHand();
-            String   itemStr = cfg.getRequiredItemString();
-            boolean  passes  = validateItem(held, itemStr);
+            ItemStack held  = player.getInventory().getItemInMainHand();
+            String itemStr  = cfg.getRequiredItemString();
+            boolean passes  = validateItem(held, itemStr);
 
             if (plugin.isDebugMode()) {
                 player.sendMessage(cfg.getMsgDebugHit(entityUUID.toString(), describeItem(held, itemStr), passes));
@@ -57,10 +56,9 @@ public class BalloonListener implements Listener {
                 return;
             }
         } else if (plugin.isDebugMode()) {
-            player.sendMessage(cfg.getMsgDebugHit(entityUUID.toString(), "any (no requirement)", true));
+            player.sendMessage(cfg.getMsgDebugHit(entityUUID.toString(), "any", true));
         }
 
-        // Catat attacker terakhir sebagai fallback untuk death event
         lastAttacker.put(entityUUID, player.getUniqueId());
     }
 
@@ -76,35 +74,32 @@ public class BalloonListener implements Listener {
 
         plugin.getBalloonTracker().unregister(uuid);
 
-        // Prioritaskan killer dari event, fallback ke lastAttacker map
         Player killer = entity.getKiller();
         if (killer == null) {
             UUID lastUUID = lastAttacker.remove(uuid);
-            if (lastUUID != null) {
-                killer = Bukkit.getPlayer(lastUUID);
-            }
+            if (lastUUID != null) killer = Bukkit.getPlayer(lastUUID);
         } else {
             lastAttacker.remove(uuid);
         }
 
         String killerName = (killer != null) ? killer.getName() : "Unknown";
-
         ConfigManager cfg = plugin.getConfigManager();
 
         if (cfg.isAnnounceGlobal()) {
             List<String> lines = cfg.getMsgBalloonPoppedLines(killerName);
             Bukkit.getOnlinePlayers().forEach(p -> lines.forEach(p::sendMessage));
-        } else {
-            if (killer != null) {
-                List<String> lines = cfg.getMsgBalloonPoppedLines(killerName);
-                lines.forEach(killer::sendMessage);
-            }
+        } else if (killer != null) {
+            cfg.getMsgBalloonPoppedLines(killerName).forEach(killer::sendMessage);
         }
 
-        List<String> commands = cfg.getRewardCommands();
-        for (String cmd : commands) {
+        for (String cmd : cfg.getRewardCommands()) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", killerName));
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEntityRemove(EntityRemoveEvent event) {
+        lastAttacker.remove(event.getEntity().getUniqueId());
     }
 
     private boolean validateItem(ItemStack held, String itemStr) {
@@ -113,11 +108,10 @@ public class BalloonListener implements Listener {
         String upper = itemStr.toUpperCase();
 
         if (upper.startsWith("VANILLA:")) {
-            String matName = upper.substring(8);
             try {
-                return held.getType() == Material.valueOf(matName);
+                return held.getType() == Material.valueOf(upper.substring(8));
             } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Material tidak valid di config: " + matName);
+                plugin.getLogger().warning("Invalid material in config: " + upper.substring(8));
                 return false;
             }
         }
@@ -125,7 +119,7 @@ public class BalloonListener implements Listener {
         if (upper.startsWith("MMOITEMS:")) {
             String[] parts = itemStr.split(":", 3);
             if (parts.length < 3) {
-                plugin.getLogger().warning("Format MMOItems tidak valid (butuh MMOITEMS:TYPE:ID): " + itemStr);
+                plugin.getLogger().warning("Invalid MMOItems format (expected MMOITEMS:TYPE:ID): " + itemStr);
                 return false;
             }
 
@@ -135,7 +129,7 @@ public class BalloonListener implements Listener {
             try {
                 Type type = MMOItems.plugin.getTypes().get(typeStr);
                 if (type == null) {
-                    plugin.getLogger().warning("MMOItems type tidak ditemukan: " + typeStr);
+                    plugin.getLogger().warning("MMOItems type not found: " + typeStr);
                     return false;
                 }
 
@@ -155,7 +149,7 @@ public class BalloonListener implements Listener {
             }
         }
 
-        plugin.getLogger().warning("Format item tidak dikenal di config: " + itemStr);
+        plugin.getLogger().warning("Unknown item format in config: " + itemStr);
         return false;
     }
 

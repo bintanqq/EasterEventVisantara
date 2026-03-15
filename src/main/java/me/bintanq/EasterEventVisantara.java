@@ -22,8 +22,6 @@ public class EasterEventVisantara extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-
-        // Visual Logger
         sendStartupArt();
 
         configManager = new ConfigManager(this);
@@ -51,7 +49,6 @@ public class EasterEventVisantara extends JavaPlugin {
                 "&d     \\  &e'  &d/     &7Author:  &fbintanq",
                 "&d      '---'      "
         };
-
         Bukkit.getConsoleSender().sendMessage("");
         for (String line : art) {
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', line));
@@ -64,9 +61,8 @@ public class EasterEventVisantara extends JavaPlugin {
         cancelTasks();
         balloonTracker.despawnAll();
         notifyManager.removeAll();
-
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&d[EasterEvent] &cPlugin has been disabled. Goodbye!"));
+                "&d[EasterEvent] &cPlugin disabled. Goodbye!"));
     }
 
     public void startTasks() {
