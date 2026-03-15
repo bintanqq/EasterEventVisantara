@@ -1,73 +1,42 @@
 # =====================================================
 #   EasterEventVisantara - messages.yml
-#   Semua pesan yang ditampilkan ke player ada di sini.
-#   Mendukung kode warna '&' di semua pesan.
+#   Palette: &d (Pink), &e (Kuning), &b (Aqua), &f (Putih)
+#   TANPA BOLD (&l)
 # =====================================================
 
-# Prefix yang ditampilkan di awal setiap pesan plugin.
-prefix: "&6&l[EasterEvent] &r"
+prefix: "&d[EasterEvent] &r"
 
-# Ditampilkan saat player menjalankan command tanpa izin.
-no-permission: "&cKamu tidak punya izin untuk melakukan ini."
+no-permission: "&cMaaf, kamu tidak diizinkan menggunakan perintah ini."
 
-# Ditampilkan saat command yang butuh player dijalankan dari console.
-not-player: "&cHanya player yang bisa menjalankan command ini."
+not-player: "&cPerintah ini hanya untuk pemain."
 
-# Ditampilkan saat sub-command tidak dikenal.
-unknown-subcommand: "&cSub-command tidak dikenal. Gunakan: &e/easter <reload|spawn|debug|status>"
+unknown-subcommand: "&7Gunakan: &d/easter <reload|spawn|debug|status>"
 
 reload:
-  # Ditampilkan saat /easter reload berhasil dijalankan.
-  success: "&aKonfigurasi berhasil di-reload dan task di-restart."
+  success: "&aKonfigurasi berhasil diperbarui."
 
 spawn:
-  # Ditampilkan saat /easter spawn berhasil spawn balon.
-  success: "&aBalloon berhasil di-spawn di lokasimu!"
-  # Ditampilkan saat /easter spawn gagal (cek console untuk detail).
-  failed: "&cGagal spawn balloon &7— cek console untuk detail error."
+  success: "&bEaster Balloon &fberhasil dimunculkan."
+  failed: "&cGagal memunculkan balon, cek console."
 
 debug:
-  # Ditampilkan saat debug mode diaktifkan via /easter debug.
-  enabled: "&aDebug mode &2AKTIF&a."
-  # Ditampilkan saat debug mode dinonaktifkan via /easter debug.
-  disabled: "&cDebug mode &4NONAKTIF&c."
+  enabled: "&dDebug mode: &aON"
+  disabled: "&dDebug mode: &cOFF"
 
-  # Log saat balon di-queue untuk spawn.
-  # Placeholder: {x} {y} {z} = koordinat, {world} = nama world.
-  spawn-info: "&7[DBG-SPAWN] &fBalloon queued at &e{x}&f, &e{y}&f, &e{z} &fin &e{world}"
+  # Debug tetap teknis (Inggris)
+  spawn-info: "&7[DEBUG] &fSpawn at &e{x}, {y}, {z} &f| World: &e{world}"
+  hit-info: "&7[DEBUG] &fEntity: &e{entity} &f| Item: &e{item} &f| Valid: &e{passed}"
+  despawn-info: "&7[DEBUG] &fEntity: &e{entity} &fdespawned (timeout)."
 
-  # Log saat balon diserang oleh player.
-  # Placeholder: {entity} = UUID balon, {item} = item yang dipakai, {passed} = lolos validasi atau tidak.
-  hit-info: "&7[DBG-HIT] &fEntity &e{entity} &f| item: &e{item} &f| lolos: &e{passed}"
+cap-reached: "&eSpawn skipped: &7Limit tercapai untuk pemain ini."
 
-  # Log saat balon dihapus karena waktu despawn habis.
-  # Placeholder: {entity} = UUID balon.
-  despawn-info: "&7[DBG-DESPAWN] &fBalloon &e{entity} &fkadaluarsa dan dihapus."
-
-# Ditampilkan ke admin (debug mode) saat spawn dilewati karena cap tercapai.
-cap-reached: "&eSpawn dilewati &7— cap sudah tercapai di sekitar player ini."
-
-# Ditampilkan saat player menyerang balon dengan item yang salah.
-# Hanya muncul jika require-specific-item: true di config.yml.
-item-mismatch: "&cKamu butuh item yang benar untuk memencet balon ini!"
+item-mismatch: "&dGunakan item khusus untuk memecahkan balon ini!"
 
 balloon:
-  # Dibroadcast ke seluruh server saat balon berhasil dipencet.
-  # Placeholder: {player} = nama player yang memencet.
-  popped: "&6&lPOP! &e{player} &6memencet sebuah balon!"
+  popped: "&d{player} &fberhasil memecahkan &eEaster Balloon&f!"
 
 status:
-  # Header pesan /easter status.
-  header: "&e===== Easter Balloon Status ====="
-
-  # Mode pengecekan cap yang sedang aktif.
-  # Placeholder: {mode} = "Per Player" atau "Global".
-  check-mode: "&fMode cap: &e{mode}"
-
-  # Jumlah balon aktif secara global.
-  # Placeholder: {active} = jumlah aktif, {cap} = batas maksimal.
-  global: "&fGlobal aktif: &e{active}&f / &e{cap}"
-
-  # Jumlah balon aktif milik satu player (hanya muncul jika cap-check-per-player: true).
-  # Placeholder: {player} = nama player, {active} = jumlah aktif, {cap} = batas per player.
-  per-player: "&f  &e{player}&f: &e{active}&f / &e{cap}"
+  header: "&d--- Easter Status ---"
+  check-mode: "&fCap Mode: &e{mode}"
+  global: "&fGlobal Active: &d{active}&f / &d{cap}"
+  per-player: "&f  &d{player}&f: &e{active}&f / &e{cap}"
