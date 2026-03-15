@@ -32,7 +32,6 @@ public class ConfigManager {
         if (!file.exists()) plugin.saveResource(name, false);
 
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-
         InputStream stream = plugin.getResource(name);
         if (stream != null) {
             YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
@@ -54,19 +53,33 @@ public class ConfigManager {
         return getPrefix() + msg(path, fallback);
     }
 
+    // config.yml getters
     public String getMythicMobId()          { return config.getString("balloon.mythicmob-id", "EasterBalloon"); }
     public int    getSpawnIntervalMinutes() { return config.getInt("balloon.spawn-interval-minutes", 2); }
-    public int    getMaxSpawnsPerBatch()    { return config.getInt("balloon.max-spawns-per-batch", 2); }
     public double getSpawnRadius()          { return config.getDouble("balloon.spawn-radius", 24.0); }
     public double getSpawnChance()          { return config.getDouble("balloon.spawn-chance", 0.50); }
     public int    getDespawnSeconds()       { return config.getInt("balloon.despawn-seconds", 60); }
     public int    getGlobalBalloonCap()     { return config.getInt("balloon.global-cap", 20); }
-    public int    getPerPlayerBalloonCap()  { return config.getInt("balloon.per-player-cap", 3); }
+    public int    getPerPlayerBalloonCap()  { return config.getInt("balloon.per-player-cap", 5); }
+    public int    getPerPlayerMin()         { return config.getInt("balloon.per-player-min", 1); }
     public boolean isCheckPerPlayer()       { return config.getBoolean("balloon.cap-check-per-player", true); }
     public boolean isRequireSpecificItem()  { return config.getBoolean("balloon.require-specific-item", false); }
     public String getRequiredItemString()   { return config.getString("balloon.required-item", "VANILLA:STICK"); }
     public List<String> getRewardCommands() { return config.getStringList("balloon.reward-commands"); }
     public boolean isAnnounceGlobal()       { return config.getBoolean("balloon.announce-global", true); }
+    public List<String> getDisabledWorlds() { return config.getStringList("balloon.disabled-worlds"); }
+    public int getFloatHeightMin()          { return config.getInt("balloon.float-height-min", 3); }
+    public int getFloatHeightMax()          { return config.getInt("balloon.float-height-max", 5); }
+    public int getSpawnMinY()               { return config.getInt("balloon.spawn-min-y", 60); }
+    public boolean isNotifyOnSpawn()        { return config.getBoolean("balloon.notify-on-spawn", true); }
+    public List<String> getNotifyTypes()    { return config.getStringList("balloon.notify-type"); }
+    public String getBossBarColor()         { return config.getString("balloon.bossbar-color", "PINK"); }
+    public String getBossBarStyle()         { return config.getString("balloon.bossbar-style", "SOLID"); }
+    public int getNotifyDurationSeconds()   { return config.getInt("balloon.notify-duration-seconds", 10); }
+    public boolean isNotifySoundEnabled()   { return config.getBoolean("balloon.notify-sound-enabled", true); }
+    public String getNotifySound()          { return config.getString("balloon.notify-sound", "ENTITY_EXPERIENCE_ORB_PICKUP"); }
+    public double getNotifySoundVolume()    { return config.getDouble("balloon.notify-sound-volume", 1.0); }
+    public double getNotifySoundPitch()     { return config.getDouble("balloon.notify-sound-pitch", 1.2); }
 
     public String getPrefix()               { return msg("prefix", "&d[EasterEvent] &r"); }
     public String getMsgReloadSuccess()     { return prefixed("reload.success", "&aKonfigurasi berhasil diperbarui."); }
@@ -80,25 +93,15 @@ public class ConfigManager {
     public String getMsgItemMismatch()      { return prefixed("item-mismatch", "&dGunakan item khusus untuk memecahkan balon ini!"); }
     public String getMsgCapReached()        { return prefixed("cap-reached", "&eSpawn skipped: &7Limit tercapai untuk pemain ini."); }
     public String getMsgStatusHeader()      { return prefixed("status.header", "&d--- Easter Status ---"); }
-    public String getMsgStatusPlayerNone()  { return prefixed("status.player-none", "&7Tidak ada balon aktif milikmu saat ini."); }
-    public boolean isNotifyOnSpawn()        { return config.getBoolean("balloon.notify-on-spawn", true); }
-    public String  getNotifyType()          { return config.getString("balloon.notify-type", "BOSSBAR"); }
-    public String  getBossBarColor()        { return config.getString("balloon.bossbar-color", "PINK"); }
-    public String  getBossBarStyle()        { return config.getString("balloon.bossbar-style", "SOLID"); }
-    public int     getNotifyDurationSeconds() { return config.getInt("balloon.notify-duration-seconds", 10); }
-    public String getMsgNotifyChat()      { return color(messages.getString("notify-spawn.chat",      "&d✦ Easter Balloon &fmuncul di dekatmu!")); }
-    public String getMsgNotifyActionBar() { return color(messages.getString("notify-spawn.actionbar", "&d✦ Easter Balloon muncul di dekatmu!")); }
-    public String getMsgNotifyBossBar()   { return color(messages.getString("notify-spawn.bossbar",   "&d✦ Easter Balloon muncul di dekatmu!")); }
-    public List<String> getNotifyTypes()       { return config.getStringList("balloon.notify-type"); }
-    public boolean isNotifySoundEnabled()      { return config.getBoolean("balloon.notify-sound-enabled", true); }
-    public String  getNotifySound()            { return config.getString("balloon.notify-sound", "ENTITY_EXPERIENCE_ORB_PICKUP"); }
-    public double  getNotifySoundVolume()      { return config.getDouble("balloon.notify-sound-volume", 1.0); }
-    public double  getNotifySoundPitch()       { return config.getDouble("balloon.notify-sound-pitch", 1.2); }
-    public List<String> getDisabledWorlds()  { return config.getStringList("balloon.disabled-worlds"); }
-    public int getFloatHeightMin()           { return config.getInt("balloon.float-height-min", 3); }
-    public int getFloatHeightMax()           { return config.getInt("balloon.float-height-max", 15); }
-    public int getSpawnMinY()                { return config.getInt("balloon.spawn-min-y", 60); }
-    public int getPerPlayerMin()             { return config.getInt("balloon.per-player-min", 1); }
+    public String getMsgStatusPlayerNone()  { return prefixed("status.player-none", "&7Tidak ada balon aktif saat ini."); }
+    public String getMsgNotifyChat()        { return color(messages.getString("notify-spawn.chat", "&d✦ Easter Balloon &fmuncul di dekatmu!")); }
+    public String getMsgNotifyActionBar()   { return color(messages.getString("notify-spawn.actionbar", "&d✦ Easter Balloon muncul di dekatmu!")); }
+    public String getMsgNotifyBossBar()     { return color(messages.getString("notify-spawn.bossbar", "&d✦ Easter Balloon muncul di dekatmu!")); }
+
+    public String getMsgPlayerNotFound(String name) {
+        String raw = messages.getString("player-not-found", "&cPlayer &e{name} &ctidak ditemukan atau sedang offline.");
+        return color(raw.replace("{name}", name));
+    }
 
     public List<String> getMsgBalloonPoppedLines(String playerName) {
         List<String> raw = messages.getStringList("balloon.popped");
@@ -127,8 +130,7 @@ public class ConfigManager {
     }
 
     public String getMsgStatusPlayerHeader(String playerName, int active, int cap) {
-        String raw = messages.getString("status.player-header",
-                "&d--- Balon Milik {player} ({active}/{cap}) ---");
+        String raw = messages.getString("status.player-header", "&d--- Balon Milik {player} ({active}/{cap}) ---");
         return color(raw
                 .replace("{player}", playerName)
                 .replace("{active}", String.valueOf(active))
@@ -140,9 +142,9 @@ public class ConfigManager {
                 "&f  &e#{index} &7@ &f{x}, {y}, {z} &7[{world}] &d&n[Teleport]");
         return color(raw
                 .replace("{index}", String.valueOf(index))
-                .replace("{x}", String.valueOf(x))
-                .replace("{y}", String.valueOf(y))
-                .replace("{z}", String.valueOf(z))
+                .replace("{x}",     String.valueOf(x))
+                .replace("{y}",     String.valueOf(y))
+                .replace("{z}",     String.valueOf(z))
                 .replace("{world}", world));
     }
 
@@ -177,10 +179,5 @@ public class ConfigManager {
         String raw = messages.getString("debug.despawn-info",
                 "&7[DEBUG] &fEntity: &e{entity} &fdespawned (timeout).");
         return color(raw.replace("{entity}", entityId));
-    }
-
-    public String getMsgPlayerNotFound(String name) {
-        String raw = messages.getString("player-not-found", "&cPlayer &e{name} &ctidak ditemukan atau sedang offline.");
-        return color(raw.replace("{name}", name));
     }
 }

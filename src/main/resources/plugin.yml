@@ -9,10 +9,13 @@ depend:
   - MythicMobs
   - MMOItems
 
+softdepend:
+  - MythicLib
+
 commands:
   easter:
     description: Easter Event admin command.
-    usage: /easter <reload|spawn|debug>
+    usage: /easter <reload|spawn|debug|status>
     permission: easter.admin
 
 permissions:

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class BalloonSpawnTask extends BukkitRunnable {
 
@@ -38,8 +37,9 @@ public class BalloonSpawnTask extends BukkitRunnable {
 
         for (int i = 0; i < players.size(); i++) {
             final Player player = players.get(i);
-            final long playerDelay = i;
 
+            // Spread tiap player ke tick yang berbeda — player ke-i diproses di tick ke-i
+            // Jadi dengan 50 player, beban tersebar ke 50 tick, bukan satu tick
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (!player.isOnline()) return;
                 if (disabledWorlds.contains(player.getWorld().getName())) return;
@@ -60,53 +60,45 @@ public class BalloonSpawnTask extends BukkitRunnable {
                     return;
                 }
 
-                int minSpawn     = cfg.getPerPlayerMin();
-                int clampedMin   = Math.min(minSpawn, slotsLeft);
-                int range        = slotsLeft - clampedMin;
+                int minSpawn   = cfg.getPerPlayerMin();
+                int clampedMin = Math.min(minSpawn, slotsLeft);
+                int range      = slotsLeft - clampedMin;
                 int attemptCount = clampedMin + (range > 0 ? rng.nextInt(range + 1) : 0);
 
-                Location playerLoc  = player.getLocation().clone();
-                double   radius     = cfg.getSpawnRadius();
+                Location playerLoc = player.getLocation().clone();
+                double   radius    = cfg.getSpawnRadius();
                 UUID     playerUUID = player.getUniqueId();
 
-                // notifyFlag: pastikan notify hanya dikirim sekali per siklus per player
-                AtomicBoolean notified       = new AtomicBoolean(false);
-                // Counter untuk tahu berapa yang benar-benar berhasil spawn
-                AtomicInteger spawnedCount   = new AtomicInteger(0);
+                AtomicBoolean notified = new AtomicBoolean(false);
 
+                // Spread tiap attempt balloon ke tick berbeda juga
                 for (int j = 0; j < attemptCount; j++) {
-                    final long spawnDelay = j * 2L;
+                    final long attemptDelay = j * 2L;
 
-                    Bukkit.getScheduler().runTaskLater(plugin, () ->
-                            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                                Location candidate = calculateSpawnLocation(playerLoc, radius, cfg);
-                                if (candidate == null) return;
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        // Pre-kalkulasi offset (murni math, aman di mana saja)
+                        // tapi world read tetap di sini karena kita sudah di main thread
+                        Location candidate = calculateSpawnLocation(playerLoc, radius, cfg);
+                        if (candidate == null) return;
 
-                                if (plugin.isDebugMode()) {
-                                    String msg = cfg.getMsgDebugSpawn(
-                                            candidate.getX(), candidate.getY(), candidate.getZ(),
-                                            candidate.getWorld().getName());
-                                    Bukkit.getScheduler().runTask(plugin, () ->
-                                            Bukkit.getOnlinePlayers().stream()
-                                                    .filter(p -> p.hasPermission("easter.admin"))
-                                                    .forEach(p -> p.sendMessage(msg)));
-                                }
+                        if (plugin.isDebugMode()) {
+                            String msg = cfg.getMsgDebugSpawn(
+                                    candidate.getX(), candidate.getY(), candidate.getZ(),
+                                    candidate.getWorld().getName());
+                            Bukkit.getOnlinePlayers().stream()
+                                    .filter(p -> p.hasPermission("easter.admin"))
+                                    .forEach(p -> p.sendMessage(msg));
+                        }
 
-                                Bukkit.getScheduler().runTask(plugin, () -> {
-                                    boolean spawned = spawnBalloon(candidate, playerUUID);
+                        boolean spawned = spawnBalloon(candidate, playerUUID);
+                        if (spawned && notified.compareAndSet(false, true) && player.isOnline()) {
+                            plugin.getNotifyManager().notifyPlayer(player);
+                        }
 
-                                    if (spawned) {
-                                        spawnedCount.incrementAndGet();
-                                        // Notify hanya sekali, saat balloon pertama berhasil spawn
-                                        if (notified.compareAndSet(false, true) && player.isOnline()) {
-                                            plugin.getNotifyManager().notifyPlayer(player);
-                                        }
-                                    }
-                                });
-                            }), spawnDelay);
+                    }, attemptDelay);
                 }
 
-            }, playerDelay);
+            }, (long) i);
         }
     }
 
@@ -123,10 +115,10 @@ public class BalloonSpawnTask extends BukkitRunnable {
 
             Location check = origin.clone().add(offsetX, 0, offsetZ);
             int highestY   = origin.getWorld().getHighestBlockYAt(check);
-            check.setY(highestY);
 
             if (highestY < minY) continue;
 
+            check.setY(highestY);
             check = skipFoliage(check);
             if (check == null) continue;
 
