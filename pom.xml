@@ -63,12 +63,6 @@
             <url>https://mvn.lumine.io/repository/maven-public/</url>
         </repository>
 
-        <!-- ModelEngine (Ticxo) -->
-        <repository>
-            <id>ticxo-repo</id>
-            <url>https://mvn.lumine.io/repository/maven-public/</url>
-        </repository>
-
         <!-- MMOItems -->
         <repository>
             <id>phoenix</id>
@@ -87,13 +81,6 @@
             <groupId>io.lumine</groupId>
             <artifactId>Mythic-Dist</artifactId>
             <version>5.11.2-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ticxo.modelengine</groupId>
-            <artifactId>ModelEngine</artifactId>
-            <version>R4.0.9</version>
             <scope>provided</scope>
         </dependency>
 

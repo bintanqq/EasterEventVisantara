@@ -67,15 +67,24 @@ public class BalloonListener implements Listener {
         event.getDrops().clear();
         event.setDroppedExp(0);
 
-        plugin.getBalloonTracker().unregister(uuid, null);
+        plugin.getBalloonTracker().unregister(uuid);
 
         Player killer = entity.getKiller();
         String killerName = (killer != null) ? killer.getName() : "Unknown";
 
-        Bukkit.getOnlinePlayers().forEach(p ->
-                p.sendMessage(plugin.getConfigManager().getMsgBalloonPopped(killerName)));
+        ConfigManager cfg = plugin.getConfigManager();
 
-        List<String> commands = plugin.getConfigManager().getRewardCommands();
+        if (cfg.isAnnounceGlobal()) {
+            List<String> lines = cfg.getMsgBalloonPoppedLines(killerName);
+            Bukkit.getOnlinePlayers().forEach(p -> lines.forEach(p::sendMessage));
+        } else {
+            if (killer != null) {
+                List<String> lines = cfg.getMsgBalloonPoppedLines(killerName);
+                lines.forEach(killer::sendMessage);
+            }
+        }
+
+        List<String> commands = cfg.getRewardCommands();
         for (String cmd : commands) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", killerName));
         }
@@ -114,7 +123,6 @@ public class BalloonListener implements Listener {
                 }
 
                 NBTItem nbtItem = NBTItem.get(held);
-
                 if (!nbtItem.hasType()) return false;
 
                 String foundType = nbtItem.getType();

@@ -3,8 +3,8 @@ package me.bintanq.util;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import me.bintanq.EasterEventVisantara;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashSet;
@@ -16,7 +16,8 @@ public class BalloonTracker {
 
     private final EasterEventVisantara plugin;
 
-    private final ConcurrentHashMap<UUID, Long>   activeBalloons  = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Long> activeBalloons     = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, UUID> balloonOwner       = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Integer> playerBalloonCount = new ConcurrentHashMap<>();
 
     private BukkitTask cleanupTask;
@@ -31,15 +32,17 @@ public class BalloonTracker {
         activeBalloons.put(entityUUID, despawnAt);
 
         if (ownerPlayerUUID != null) {
+            balloonOwner.put(entityUUID, ownerPlayerUUID);
             playerBalloonCount.merge(ownerPlayerUUID, 1, Integer::sum);
         }
     }
 
-    public void unregister(UUID entityUUID, UUID ownerPlayerUUID) {
+    public void unregister(UUID entityUUID) {
         activeBalloons.remove(entityUUID);
 
-        if (ownerPlayerUUID != null) {
-            playerBalloonCount.computeIfPresent(ownerPlayerUUID, (k, v) -> {
+        UUID ownerUUID = balloonOwner.remove(entityUUID);
+        if (ownerUUID != null) {
+            playerBalloonCount.computeIfPresent(ownerUUID, (k, v) -> {
                 int newVal = v - 1;
                 return newVal <= 0 ? null : newVal;
             });
@@ -62,13 +65,26 @@ public class BalloonTracker {
         return playerBalloonCount;
     }
 
+    public Map<UUID, UUID> getBalloonOwnerMap() {
+        return balloonOwner;
+    }
+
+    public Location getBalloonLocation(UUID entityUUID) {
+        Entity entity = Bukkit.getEntity(entityUUID);
+        return (entity != null && !entity.isDead()) ? entity.getLocation() : null;
+    }
+
+    public ConcurrentHashMap<UUID, Long> getActiveBalloons() {
+        return activeBalloons;
+    }
+
     public void startCleanupTask() {
         cleanupTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             long now = System.currentTimeMillis();
             for (Map.Entry<UUID, Long> entry : activeBalloons.entrySet()) {
                 if (now >= entry.getValue()) {
                     UUID uuid = entry.getKey();
-                    Bukkit.getScheduler().runTask(plugin, () -> removeBalloon(uuid, null));
+                    Bukkit.getScheduler().runTask(plugin, () -> removeBalloon(uuid));
                 }
             }
         }, 40L, 40L);
@@ -80,10 +96,10 @@ public class BalloonTracker {
         }
     }
 
-    private void removeBalloon(UUID uuid, UUID ownerUUID) {
+    private void removeBalloon(UUID uuid) {
         if (!activeBalloons.containsKey(uuid)) return;
 
-        unregister(uuid, ownerUUID);
+        unregister(uuid);
 
         Entity entity = Bukkit.getEntity(uuid);
         if (entity == null || entity.isDead()) return;
@@ -105,8 +121,9 @@ public class BalloonTracker {
     }
 
     public void despawnAll() {
-        new HashSet<>(activeBalloons.keySet()).forEach(uuid -> removeBalloon(uuid, null));
+        new HashSet<>(activeBalloons.keySet()).forEach(this::removeBalloon);
         activeBalloons.clear();
         playerBalloonCount.clear();
+        balloonOwner.clear();
     }
 }

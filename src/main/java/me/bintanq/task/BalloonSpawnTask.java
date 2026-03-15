@@ -31,7 +31,8 @@ public class BalloonSpawnTask extends BukkitRunnable {
         ConfigManager cfg = plugin.getConfigManager();
 
         if (!cfg.isCheckPerPlayer()) {
-            if (plugin.getBalloonTracker().getActiveCount() >= cfg.getGlobalBalloonCap()) return;
+            int globalCap = cfg.getGlobalBalloonCap();
+            if (globalCap != -1 && plugin.getBalloonTracker().getActiveCount() >= globalCap) return;
         }
 
         List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
@@ -56,8 +57,8 @@ public class BalloonSpawnTask extends BukkitRunnable {
 
             if (rng.nextDouble() > cfg.getSpawnChance()) continue;
 
-            Location playerLoc = player.getLocation().clone();
-            double   radius    = cfg.getSpawnRadius();
+            Location playerLoc  = player.getLocation().clone();
+            double   radius     = cfg.getSpawnRadius();
             UUID     playerUUID = player.getUniqueId();
 
             Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -98,14 +99,15 @@ public class BalloonSpawnTask extends BukkitRunnable {
         return null;
     }
 
-    private void spawnBalloon(Location loc, java.util.UUID playerUUID) {
+    private void spawnBalloon(Location loc, UUID playerUUID) {
         ConfigManager cfg = plugin.getConfigManager();
 
         if (cfg.isCheckPerPlayer()) {
             int currentCount = plugin.getBalloonTracker().getPlayerBalloonCount(playerUUID);
             if (currentCount >= cfg.getPerPlayerBalloonCap()) return;
         } else {
-            if (plugin.getBalloonTracker().getActiveCount() >= cfg.getGlobalBalloonCap()) return;
+            int globalCap = cfg.getGlobalBalloonCap();
+            if (globalCap != -1 && plugin.getBalloonTracker().getActiveCount() >= globalCap) return;
         }
 
         if (MythicBukkit.inst().getMobManager().getMythicMob(cfg.getMythicMobId()).isEmpty()) {
