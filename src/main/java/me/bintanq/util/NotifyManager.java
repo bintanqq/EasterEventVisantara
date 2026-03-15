@@ -10,6 +10,7 @@ import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.List;
@@ -19,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NotifyManager {
 
     private final EasterEventVisantara plugin;
-    private final ConcurrentHashMap<UUID, BossBar>    activeBossBars    = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, BukkitTask> activeActionBars  = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, BossBar>    activeBossBars   = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, BukkitTask> activeActionBars = new ConcurrentHashMap<>();
 
     public NotifyManager(EasterEventVisantara plugin) {
         this.plugin = plugin;
@@ -53,19 +54,23 @@ public class NotifyManager {
         BukkitTask old = activeActionBars.remove(uuid);
         if (old != null) old.cancel();
 
-        String text    = cfg.getMsgNotifyActionBar();
-        int totalTicks = cfg.getNotifyDurationSeconds() * 20;
-        int[] elapsed  = {0};
+        String text      = cfg.getMsgNotifyActionBar();
+        int totalTicks   = cfg.getNotifyDurationSeconds() * 20;
 
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, t -> {
-            if (!player.isOnline() || elapsed[0] >= totalTicks) {
-                t.cancel();
-                activeActionBars.remove(uuid);
-                return;
+        BukkitTask task = new BukkitRunnable() {
+            int elapsed = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline() || elapsed >= totalTicks) {
+                    activeActionBars.remove(uuid);
+                    cancel();
+                    return;
+                }
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(text));
+                elapsed += 2;
             }
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(text));
-            elapsed[0] += 2;
-        }, 0L, 2L);
+        }.runTaskTimer(plugin, 0L, 2L);
 
         activeActionBars.put(uuid, task);
     }
@@ -88,17 +93,21 @@ public class NotifyManager {
         activeBossBars.put(uuid, bar);
 
         int durationTicks = cfg.getNotifyDurationSeconds() * 20;
-        int[] elapsed     = {0};
 
-        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
-            if (!player.isOnline() || elapsed[0] >= durationTicks) {
-                task.cancel();
-                removeBossBar(uuid);
-                return;
+        new BukkitRunnable() {
+            int elapsed = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline() || elapsed >= durationTicks) {
+                    cancel();
+                    removeBossBar(uuid);
+                    return;
+                }
+                bar.setProgress(Math.max(0.0, 1.0 - ((double) elapsed / durationTicks)));
+                elapsed += 2;
             }
-            bar.setProgress(Math.max(0.0, 1.0 - ((double) elapsed[0] / durationTicks)));
-            elapsed[0] += 2;
-        }, 0L, 2L);
+        }.runTaskTimer(plugin, 0L, 2L);
     }
 
     private void playSound(Player player, ConfigManager cfg) {
