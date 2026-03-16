@@ -16,6 +16,7 @@ balloon:
   disabled-worlds:
     - "world_nether"
     - "world_the_end"
+    - "SpawnLobby"
 
   # ── Float Height ──────────────────────────────────
   # Random float height range above the surface (blocks).
@@ -23,6 +24,17 @@ balloon:
   float-height-max: 5
   # Minimum world Y for a valid spawn point (prevents underground spawns).
   spawn-min-y: 60
+
+  # ── Float Movement ────────────────────────────────
+  # Enable upward floating movement for balloons.
+  float-enabled: true
+  # Rise speed per tick (blocks). 0.03 = slow helium balloon feel.
+  # Increase for faster rise, decrease for slower.
+  # Recommended range: 0.01 (very slow) to 0.08 (fast).
+  float-rise-speed: 0.03
+  # Max blocks the balloon can rise above its spawn point before stopping.
+  # Set -1 for unlimited.
+  float-max-y-offset: 10
 
   # ── Cap ───────────────────────────────────────────
   # Max balloons active server-wide. Set -1 for unlimited.

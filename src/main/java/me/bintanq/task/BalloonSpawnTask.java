@@ -108,15 +108,17 @@ public class BalloonSpawnTask extends BukkitRunnable {
             double offsetZ = Math.sin(angle) * dist;
 
             Location check = origin.clone().add(offsetX, 0, offsetZ);
-            int highestY   = origin.getWorld().getHighestBlockYAt(check);
 
+            int highestY = origin.getWorld().getHighestBlockYAt(check);
             if (highestY < minY) continue;
 
             check.setY(highestY);
-            check = skipFoliage(check);
-            if (check == null) continue;
 
-            Location surface = check.clone().add(0, 1, 0);
+            Location ground = descendToGround(check);
+            if (ground == null) continue;
+            if (ground.getBlockY() < minY) continue;
+
+            Location surface = ground.clone().add(0, 1, 0);
             if (surface.getBlock().getType() != Material.AIR) continue;
 
             int floatHeight = floatMin + (floatMax > floatMin ? rng.nextInt(floatMax - floatMin + 1) : 0);
@@ -127,24 +129,29 @@ public class BalloonSpawnTask extends BukkitRunnable {
         return null;
     }
 
-    private Location skipFoliage(Location surface) {
-        Location current = surface.clone();
+    private Location descendToGround(Location top) {
+        Location current = top.clone();
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 40; i++) {
             Material type = current.getBlock().getType();
 
-            boolean isFoliage = Tag.LEAVES.isTagged(type)
+            boolean isNotGround = Tag.LEAVES.isTagged(type)
                     || Tag.LOGS.isTagged(type)
                     || Tag.SAPLINGS.isTagged(type)
                     || type == Material.VINE
                     || type == Material.BAMBOO
                     || type == Material.SUGAR_CANE
+                    || type == Material.AIR
+                    || type == Material.CAVE_AIR
+                    || type == Material.VOID_AIR
                     || type.name().contains("LEAVES")
                     || type.name().contains("LOG");
 
-            if (!isFoliage) return current;
-            current = current.clone().add(0, 1, 0);
+            if (!isNotGround) return current;
+
+            current = current.clone().subtract(0, 1, 0);
         }
+
         return null;
     }
 

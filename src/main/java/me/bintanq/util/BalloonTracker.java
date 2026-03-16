@@ -19,6 +19,7 @@ public class BalloonTracker {
     private final ConcurrentHashMap<UUID, Long>    activeBalloons     = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, UUID>    balloonOwner       = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Integer> playerBalloonCount = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Double> balloonSpawnY = new ConcurrentHashMap<>();
 
     private BukkitTask cleanupTask;
 
@@ -30,14 +31,21 @@ public class BalloonTracker {
         long despawnAt = System.currentTimeMillis()
                 + (plugin.getConfigManager().getDespawnSeconds() * 1000L);
         activeBalloons.put(entityUUID, despawnAt);
+
         if (ownerPlayerUUID != null) {
             balloonOwner.put(entityUUID, ownerPlayerUUID);
             playerBalloonCount.merge(ownerPlayerUUID, 1, Integer::sum);
+        }
+
+        Entity entity = Bukkit.getEntity(entityUUID);
+        if (entity != null) {
+            balloonSpawnY.put(entityUUID, entity.getLocation().getY());
         }
     }
 
     public void unregister(UUID entityUUID) {
         if (activeBalloons.remove(entityUUID) == null) return;
+        balloonSpawnY.remove(entityUUID);
         UUID ownerUUID = balloonOwner.remove(entityUUID);
         if (ownerUUID != null) {
             playerBalloonCount.computeIfPresent(ownerUUID, (k, v) -> {
@@ -102,5 +110,10 @@ public class BalloonTracker {
         activeBalloons.clear();
         playerBalloonCount.clear();
         balloonOwner.clear();
+        balloonSpawnY.clear();
+    }
+
+    public Double getBalloonSpawnY(UUID entityUUID) {
+        return balloonSpawnY.get(entityUUID);
     }
 }

@@ -95,6 +95,9 @@ public class ConfigManager {
     public String getMsgNotifyChat()        { return color(messages.getString("notify-spawn.chat", "&d✦ Easter Balloon nearby!")); }
     public String getMsgNotifyActionBar()   { return color(messages.getString("notify-spawn.actionbar", "&d✦ Easter Balloon nearby!")); }
     public String getMsgNotifyBossBar()     { return color(messages.getString("notify-spawn.bossbar", "&d✦ Easter Balloon nearby!")); }
+    public double getFloatRiseSpeed()  { return config.getDouble("balloon.float-rise-speed", 0.03); }
+    public boolean isFloatEnabled()    { return config.getBoolean("balloon.float-enabled", true); }
+    public int getFloatMaxYOffset() { return config.getInt("balloon.float-max-y-offset", 20); }
 
     public String getMsgPlayerNotFound(String name) {
         String raw = messages.getString("player-not-found", "&cPlayer &e{name} &cnot found.");

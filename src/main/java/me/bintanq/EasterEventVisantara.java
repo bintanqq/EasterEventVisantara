@@ -3,12 +3,14 @@ package me.bintanq;
 import me.bintanq.command.EasterCommand;
 import me.bintanq.listener.BalloonListener;
 import me.bintanq.manager.ConfigManager;
+import me.bintanq.task.BalloonFloatTask;
 import me.bintanq.task.BalloonSpawnTask;
 import me.bintanq.util.BalloonTracker;
 import me.bintanq.util.NotifyManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 public class EasterEventVisantara extends JavaPlugin {
 
@@ -17,6 +19,7 @@ public class EasterEventVisantara extends JavaPlugin {
     private BalloonTracker balloonTracker;
     private NotifyManager notifyManager;
     private BalloonSpawnTask balloonSpawnTask;
+    private BukkitTask balloonFloatTask;
     private volatile boolean debugMode = false;
 
     @Override
@@ -67,16 +70,19 @@ public class EasterEventVisantara extends JavaPlugin {
 
     public void startTasks() {
         if (balloonSpawnTask != null) cancelTasks();
+
         balloonSpawnTask = new BalloonSpawnTask(this);
         long intervalTicks = configManager.getSpawnIntervalMinutes() * 60L * 20L;
         balloonSpawnTask.runTaskTimer(this, 40L, intervalTicks);
+
+        balloonFloatTask = new BalloonFloatTask(this).runTaskTimer(this, 5L, 2L);
+
         balloonTracker.startCleanupTask();
     }
 
     public void cancelTasks() {
-        if (balloonSpawnTask != null && !balloonSpawnTask.isCancelled()) {
-            balloonSpawnTask.cancel();
-        }
+        if (balloonSpawnTask != null && !balloonSpawnTask.isCancelled()) balloonSpawnTask.cancel();
+        if (balloonFloatTask != null && !balloonFloatTask.isCancelled()) balloonFloatTask.cancel();
         balloonTracker.cancelCleanupTask();
     }
 
