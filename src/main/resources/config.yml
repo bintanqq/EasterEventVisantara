@@ -2,83 +2,242 @@
 #   EasterEventVisantara - config.yml
 # =====================================================
 
+world-settings:
+  resource-world-name: "easter_resource"
+  reset-time: "00:00"
+  # Ukuran world border (diameter = total lebar dari -X ke +X).
+  # 5000 = area 5000x5000 blok (dari -2500 sampai +2500 di tiap arah).
+  # Kalau mau 5000 ke tiap arah (10000x10000 total), set ke 10000.
+  border-size: 5000.0
+
+  fallback-spawn:
+    # Koordinat tujuan teleport saat world locked/reset
+    # Set ke spawn utama server kamu
+    world: "SpawnLobby"
+    x: 522.0
+    y: -10.0
+    z: -213.0
+    yaw: 0.0
+    pitch: 0.0
+
+structure-settings:
+  # Whitelist biome yang boleh di-spawn struktur.
+  # KOSONGKAN untuk allow semua biome (disarankan untuk awal testing).
+  # Untuk cek nama biome aktual pakai: /easter debug biome
+  # Contoh nama: plains, meadow, flower_forest, sunflower_plains
+  biome-whitelist: []
+  # biome-whitelist:
+  #   - "plains"
+  #   - "meadow"
+  #   - "sunflower_plains"
+  #   - "flower_forest"
+
+  # Probabilitas struktur muncul per chunk (0.0-1.0).
+  # 0.05 = 5% per chunk = sekitar 10-20 struktur per 500x500 area.
+  # Turunkan untuk lebih rare, naikkan untuk lebih sering.
+  spawn-chance: 1.0
+
+  max-per-chunk: 1
+
+  # Jarak minimum antar struktur (blok). Naikkan untuk lebih jarang/tersebar.
+  min-distance-between: 256
+
+  # Total maksimum struktur di seluruh world. -1 = tidak terbatas.
+  max-total: 30
+
+  # Radius footprint struktur (blok). Semua titik dalam area ini dicek soliditasnya.
+  # Set sesuai lebar schem kamu: schem 10x10 blok = radius 5.
+  # Makin besar = makin ketat, makin banyak lokasi yang di-reject.
+  flat-check-radius: 4
+
+  # Toleransi ketinggian antar titik footprint (blok).
+  # 2 = boleh ada perbedaan 2 blok naik/turun dalam area footprint.
+  # Turunkan ke 1 untuk terrain yang sangat flat saja.
+  flat-max-height-diff: 2
+
+  # Tinggi ruang udara di atas struktur (blok). Set sesuai tinggi schem.
+  # Rumah 2 lantai ~8 blok: set 10. Schem besar: set lebih tinggi.
+  clear-height-above: 10
+
+  # Radius chunk yang di-seed saat world dibuat/seed manual.
+  # -1 = otomatis ikut border-size (direkomendasikan).
+  # > 0 = override manual, max 64. Contoh: 16 = area 512x512 blok.
+  seed-chunk-radius: -1
+  variants:
+    SmallBasket:
+      schematic: "rumahdonat.schem"
+      weight: 5
+      loot-table: "common_basket"
+      # Offset Y saat paste. Positif = naik, negatif = turun ke bawah.
+      # Sesuaikan agar struktur tidak amblas ke tanah. Mulai dari 0, coba -1, -2, dst.
+      paste-y-offset: 0
+    GiantEgg:
+      schematic: "oakhouse.schem"
+      weight: 3
+      loot-table: "rare_egg"
+      # Offset Y saat paste. Positif = naik, negatif = turun ke bawah.
+      # Sesuaikan agar struktur tidak amblas ke tanah. Mulai dari 0, coba -1, -2, dst.
+      paste-y-offset: 0
+    EasterShrine:
+      schematic: "EasterShrine.schem"
+      weight: 1
+      loot-table: "epic_shrine"
+      # Offset Y saat paste. Positif = naik, negatif = turun ke bawah.
+      # Sesuaikan agar struktur tidak amblas ke tanah. Mulai dari 0, coba -1, -2, dst.
+      paste-y-offset: 0
+
+robbit-settings:
+  mob-id: "RobbitEaster"
+  trigger-radius: 16.0
+  max-per-structure: 3
+
+loot-tables:
+  common_basket:
+    entries:
+      egg:
+        type: VANILLA
+        id: EGG
+        amount-min: 2
+        amount-max: 6
+        weight: 5
+      cookie:
+        type: VANILLA
+        id: COOKIE
+        amount-min: 1
+        amount-max: 3
+        weight: 4
+      chocolate_sword:
+        type: MMOITEMS
+        id: "SWORD:CHOCOLATE_SWORD"
+        amount-min: 1
+        amount-max: 1
+        weight: 1
+  rare_egg:
+    entries:
+      gold_nugget:
+        type: VANILLA
+        id: GOLD_NUGGET
+        amount-min: 3
+        amount-max: 8
+        weight: 5
+      rabbit_hide:
+        type: VANILLA
+        id: RABBIT_HIDE
+        amount-min: 1
+        amount-max: 2
+        weight: 4
+      easter_staff:
+        type: MMOITEMS
+        id: "STAFF:EASTER_SPRING_STAFF"
+        amount-min: 1
+        amount-max: 1
+        weight: 1
+  epic_shrine:
+    entries:
+      diamond:
+        type: VANILLA
+        id: DIAMOND
+        amount-min: 1
+        amount-max: 3
+        weight: 3
+      emerald:
+        type: VANILLA
+        id: EMERALD
+        amount-min: 2
+        amount-max: 5
+        weight: 4
+      bunny_crown:
+        type: MMOITEMS
+        id: "HELMET:BUNNY_CROWN"
+        amount-min: 1
+        amount-max: 1
+        weight: 1
+
 balloon:
+  # ID MythicMob untuk balon Easter
   mythicmob-id: "EasterBalloon"
 
-  # ── Spawn ─────────────────────────────────────────
-  # How often the spawn cycle runs (minutes).
+  # Seberapa sering siklus spawn balon berjalan (menit)
   spawn-interval-minutes: 1
-  # Horizontal radius around each player to attempt spawning.
+
+  # Radius horizontal di sekitar pemain untuk mencoba spawn
   spawn-radius: 12.0
-  # Probability (0.0–1.0) that a spawn attempt succeeds per player per cycle.
+
+  # Probabilitas spawn berhasil per pemain per siklus (0.0–1.0)
   spawn-chance: 0.50
-  # Worlds where balloon spawning is disabled.
+
+  # World yang dinonaktifkan dari spawn balon
   disabled-worlds:
     - "world_nether"
     - "world_the_end"
     - "SpawnLobby"
 
-  # ── Float Height ──────────────────────────────────
-  # Random float height range above the surface (blocks).
+  # Range tinggi balon saat muncul di atas permukaan (blok)
   float-height-min: 3
   float-height-max: 5
-  # Minimum world Y for a valid spawn point (prevents underground spawns).
+
+  # Y minimum agar titik spawn dianggap valid
   spawn-min-y: 60
 
-  # ── Float Movement ────────────────────────────────
-  # Enable upward floating movement for balloons.
+  # Aktifkan gerakan naik perlahan pada balon
   float-enabled: true
-  # Rise speed per tick (blocks). 0.03 = slow helium balloon feel.
-  # Increase for faster rise, decrease for slower.
-  # Recommended range: 0.01 (very slow) to 0.08 (fast).
+
+  # Kecepatan naik per tick. 0.03 = lambat seperti balon helium
   float-rise-speed: 0.03
-  # Max blocks the balloon can rise above its spawn point before stopping.
-  # Set -1 for unlimited.
+
+  # Batas maksimal ketinggian naik dari titik spawn. -1 = tidak terbatas
   float-max-y-offset: 10
 
-  # ── Cap ───────────────────────────────────────────
-  # Max balloons active server-wide. Set -1 for unlimited.
+  # Batas maksimal balon aktif di seluruh server. -1 = tidak terbatas
   global-cap: 20
-  # Max balloons per player. Used when cap-check-per-player is true.
+
+  # Batas balon per pemain (digunakan saat cap-check-per-player: true)
   per-player-cap: 5
-  # Min balloons attempted per player per cycle. Randomised between min and cap.
+
+  # Minimal balon yang dicoba per pemain per siklus
   per-player-min: 1
-  # true = enforce cap per player | false = enforce global cap.
+
+  # true = cek cap per pemain | false = cek cap global
   cap-check-per-player: true
-  # Seconds before an un-popped balloon auto-despawns.
+
+  # Detik sebelum balon yang belum dipecahkan otomatis hilang
   despawn-seconds: 60
 
-  # ── Item Requirement ──────────────────────────────
-  # Require a specific item to pop the balloon.
+  # Wajibkan item tertentu untuk memecahkan balon
   require-specific-item: false
-  # Formats: VANILLA:<MATERIAL> | MMOITEMS:<TYPE>:<ID>
+
+  # Format: VANILLA:<MATERIAL> atau MMOITEMS:<TYPE>:<ID>
   required-item: "VANILLA:STICK"
 
-  # ── Notification ──────────────────────────────────
-  # Send a notification to a player when a balloon spawns near them.
+  # Kirim notifikasi ke pemain saat balon muncul di dekatnya
   notify-on-spawn: true
-  # Notification types. Options: CHAT, ACTIONBAR, BOSSBAR (can combine).
+
+  # Tipe notifikasi: CHAT, ACTIONBAR, BOSSBAR (bisa dikombinasi)
   notify-type:
     - BOSSBAR
     - CHAT
-  # BossBar color: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+
+  # Warna BossBar: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
   bossbar-color: PINK
-  # BossBar style: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
+
+  # Gaya BossBar: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
   bossbar-style: SOLID
-  # How long (seconds) the bossbar/actionbar notification stays visible.
+
+  # Durasi tampil notifikasi bossbar/actionbar (detik)
   notify-duration-seconds: 10
 
-  # ── Sound ─────────────────────────────────────────
+  # Aktifkan efek suara saat notifikasi spawn
   notify-sound-enabled: true
-  # Reference: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
+
+  # Referensi: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
   notify-sound: "ENTITY_CHICKEN_EGG"
   notify-sound-volume: 1.0
   notify-sound-pitch: 1.2
 
-  # ── Reward ────────────────────────────────────────
-  # true = broadcast pop message to all players | false = killer only.
+  # true = umumkan ke semua pemain | false = hanya ke pemain yang memecahkan
   announce-global: true
-  # Console commands on pop. Use %player% as the killer's name.
+
+  # Perintah console saat balon dipecahkan. Gunakan %player% sebagai nama pemain
   reward-commands:
     - "give %player% minecraft:egg 3"
     - "eco give %player% 50"

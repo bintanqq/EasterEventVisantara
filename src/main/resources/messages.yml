@@ -6,7 +6,7 @@ prefix: "&d[EasterEvent] &r"
 
 no-permission: "&cMaaf, kamu tidak diizinkan menggunakan perintah ini."
 not-player: "&cPerintah ini hanya untuk pemain."
-unknown-subcommand: "&7Gunakan: &d/easter <reload|spawn|debug|status>"
+unknown-subcommand: "&7Gunakan: &d/easter <reload|spawn|debug|status|world>"
 player-not-found: "&cPlayer &e{name} &ctidak ditemukan atau sedang offline."
 
 reload:
@@ -32,6 +32,19 @@ notify-spawn:
   actionbar: "&d✦ Easter Balloon muncul di dekatmu!"
   bossbar: "&d✦ Easter Balloon muncul di dekatmu!"
 
+world-reset:
+  resetting: "&eResource World sedang direset. Kamu dipindahkan ke tempat aman!"
+  done: "&aResource World telah direset. Silakan masuk kembali!"
+
+world-create:
+  creating: "&eMemuat Resource World, harap tunggu..."
+  done: "&aResource World berhasil dibuat!"
+  failed: "&cGagal membuat Resource World. Cek console."
+
+structure:
+  pasted: "&aStruktur berhasil dipaste."
+  failed: "&cGagal paste struktur. Cek console."
+
 balloon:
   popped:
     - ""
@@ -52,3 +65,6 @@ status:
   player-entry: "&f  &e#{index} &7@ &f{x}, {y}, {z} &7[{world}] &d&n[Teleport]"
   player-entry-hover: "&fKlik untuk teleport ke &e{x}, {y}, {z}"
   player-none: "&7Tidak ada balon aktif milikmu saat ini."
+
+world-locked: "&cResource World sedang dalam proses generate struktur. Harap tunggu!"
+world-seed-done: "&aStruktur selesai digenerate! Resource World siap dimasuki."

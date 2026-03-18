@@ -8,6 +8,8 @@ description: Visantara Trade
 depend:
   - MythicMobs
   - MMOItems
+  - Multiverse-Core
+  - FastAsyncWorldEdit
 
 softdepend:
   - MythicLib
@@ -15,10 +17,10 @@ softdepend:
 commands:
   easter:
     description: Easter Event admin command.
-    usage: /easter <reload|spawn|debug|status>
+    usage: /easter <reload|spawn|debug|status|world>
     permission: easter.admin
 
 permissions:
   easter.admin:
-    description: Access to all /easter commands.
+    description: Akses semua command /easter.
     default: op

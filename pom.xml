@@ -38,6 +38,18 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.spigotmc:*</exclude>
+                                    <exclude>io.lumine:*</exclude>
+                                    <exclude>net.Indyuce:*</exclude>
+                                    <exclude>com.fastasyncworldedit:*</exclude>
+                                    <exclude>com.sk89q.worldedit:*</exclude>
+                                    <exclude>org.mvplugins.multiverse.core:*</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -57,26 +69,72 @@
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
 
-        <!-- MythicMobs (Lumine) -->
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+
+        <!-- MythicMobs -->
         <repository>
             <id>lumine-repo</id>
             <url>https://mvn.lumine.io/repository/maven-public/</url>
         </repository>
 
-        <!-- MMOItems -->
+        <!-- MMOItems / MythicLib -->
         <repository>
             <id>phoenix</id>
             <url>https://nexus.phoenixdevt.fr/repository/maven-public/</url>
         </repository>
+
+        <!--
+            FastAsyncWorldEdit 2.x
+            Primary repo: IntellectualSites CI Maven workspace.
+            If Maven cannot resolve the snapshot, install the jar locally:
+
+              mvn install:install-file \
+                -Dfile=FastAsyncWorldEdit-Bukkit-2.13.1-SNAPSHOT.jar \
+                -DgroupId=com.fastasyncworldedit \
+                -DartifactId=FastAsyncWorldEdit-Bukkit \
+                -Dversion=2.13.1-SNAPSHOT -Dpackaging=jar
+
+            Do the same for FastAsyncWorldEdit-Core.
+        -->
+        <repository>
+            <id>intellectualsites-releases</id>
+            <url>https://mvn.intellectualsites.com/content/repositories/releases/</url>
+        </repository>
+        <repository>
+            <id>intellectualsites-snapshots</id>
+            <url>https://mvn.intellectualsites.com/content/repositories/snapshots/</url>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <!-- EngineHub (WorldEdit API pulled transitively) -->
+        <repository>
+            <id>enginehub-repo</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
+
+        <!--
+            Multiverse-Core 5.x
+            Official repo: https://repo.onarandombox.com
+            No authentication required.
+        -->
+        <repository>
+            <id>onarandombox</id>
+            <url>https://repo.onarandombox.com/content/groups/public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
+        <!-- Spigot API -->
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
             <version>1.21.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- MythicMobs -->
         <dependency>
             <groupId>io.lumine</groupId>
             <artifactId>Mythic-Dist</artifactId>
@@ -84,6 +142,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- MythicLib -->
         <dependency>
             <groupId>io.lumine</groupId>
             <artifactId>MythicLib-dist</artifactId>
@@ -92,11 +151,53 @@
             <optional>true</optional>
         </dependency>
 
-
+        <!-- MMOItems -->
         <dependency>
             <groupId>net.Indyuce</groupId>
             <artifactId>MMOItems-API</artifactId>
             <version>6.9.5-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
+            FastAsyncWorldEdit 2.13.1-SNAPSHOT
+            Use version "2.13.1-SNAPSHOT" — the stable release tag for build 1089.
+            IntellectualSites publishes both -SNAPSHOT and trimmed release versions.
+        -->
+        <dependency>
+            <groupId>com.fastasyncworldedit</groupId>
+            <artifactId>FastAsyncWorldEdit-Core</artifactId>
+            <version>2.13.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fastasyncworldedit</groupId>
+            <artifactId>FastAsyncWorldEdit-Bukkit</artifactId>
+            <version>2.13.1</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fastasyncworldedit</groupId>
+                    <artifactId>FastAsyncWorldEdit-Core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- WorldEdit API (transitively pulled by FAWE, pinned for IDE) -->
+        <dependency>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-bukkit</artifactId>
+            <version>7.3.10-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
+            Multiverse-Core 5.3.4-SNAPSHOT
+            Repo: https://repo.onarandombox.com — no auth needed.
+        -->
+        <dependency>
+            <groupId>org.mvplugins.multiverse.core</groupId>
+            <artifactId>multiverse-core</artifactId>
+            <version>5.3.4-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
