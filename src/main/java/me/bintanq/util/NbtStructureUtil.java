@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.structure.Structure;
 import org.bukkit.structure.StructureManager;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,8 +18,8 @@ public class NbtStructureUtil {
     private static final String STRUCTURES_FOLDER = "structures";
 
     private final EasterEventVisantara plugin;
-    private final File structuresDir;
-    private final Random rng = new Random();
+    private final File                 structuresDir;
+    private final Random               rng = new Random();
 
     public NbtStructureUtil(EasterEventVisantara plugin) {
         this.plugin        = plugin;
@@ -59,7 +60,7 @@ public class NbtStructureUtil {
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 try {
                     StructureManager sm = plugin.getServer().getStructureManager();
-                    Structure structure  = sm.loadStructure(new java.io.ByteArrayInputStream(finalData));
+                    Structure structure  = sm.loadStructure(new ByteArrayInputStream(finalData));
 
                     structure.place(origin, includeEntities,
                             org.bukkit.block.structure.StructureRotation.NONE,

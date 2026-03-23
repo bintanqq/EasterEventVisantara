@@ -60,14 +60,13 @@ public class StructureManager {
             int centerY = world.getHighestBlockYAt(targetX, targetZ, org.bukkit.HeightMap.WORLD_SURFACE);
             if (centerY < minY) continue;
 
-            // Cek flatness dan ambil Y minimum dari seluruh footprint
-            // Paste di Y minimum supaya seluruh bangunan di atas tanah
-            int minSurfaceY = getMinSurfaceY(world, targetX, centerY, targetZ, footR);
-            if (minSurfaceY < minY) continue;
-            if (!isGroundSafe(world, targetX, minSurfaceY, targetZ, footR)) continue;
-            if (!hasAirAbove(world, targetX, minSurfaceY, targetZ, footR, clearH)) continue;
+            FootprintResult fp = scanFootprint(world, targetX, centerY, targetZ, footR);
+            if (!fp.valid) continue;
+            if (fp.minY < minY) continue;
 
-            Location candidate = new Location(world, targetX, minSurfaceY + 1, targetZ);
+            if (!hasAirAbove(world, targetX, fp.minY, targetZ, footR, clearH)) continue;
+
+            Location candidate = new Location(world, targetX, fp.minY + 1, targetZ);
             if (!structureTracker.isClearOfStructures(candidate, minDist)) continue;
 
             return candidate;
@@ -75,38 +74,42 @@ public class StructureManager {
         return null;
     }
 
-    private int getMinSurfaceY(World world, int cx, int centerY, int cz, int footprintRadius) {
+    private static class FootprintResult {
+        boolean valid;
+        int     minY;
+        FootprintResult(boolean valid, int minY) {
+            this.valid = valid;
+            this.minY  = minY;
+        }
+    }
+
+    private FootprintResult scanFootprint(World world, int cx, int centerY, int cz, int radius) {
         int minH = centerY;
-        int step = Math.max(1, footprintRadius / 3);
-        for (int dx = -footprintRadius; dx <= footprintRadius; dx += step) {
-            for (int dz = -footprintRadius; dz <= footprintRadius; dz += step) {
-                int h = world.getHighestBlockYAt(cx + dx, cz + dz, org.bukkit.HeightMap.WORLD_SURFACE);
+        int step = Math.max(2, radius / 2);
+
+        for (int dx = -radius; dx <= radius; dx += step) {
+            for (int dz = -radius; dz <= radius; dz += step) {
+                int h     = world.getHighestBlockYAt(cx + dx, cz + dz, org.bukkit.HeightMap.WORLD_SURFACE);
+                Block top = world.getBlockAt(cx + dx, h, cz + dz);
+
+                if (isUnsafeSurface(top.getType())) {
+                    return new FootprintResult(false, 0);
+                }
+
                 if (h < minH) minH = h;
             }
         }
-        return minH;
-    }
-
-    private boolean isGroundSafe(World world, int cx, int surfaceY,
-                                 int cz, int footprintRadius) {
-        int step = Math.max(1, footprintRadius / 3);
-        for (int dx = -footprintRadius; dx <= footprintRadius; dx += step) {
-            for (int dz = -footprintRadius; dz <= footprintRadius; dz += step) {
-                int h     = world.getHighestBlockYAt(cx + dx, cz + dz, org.bukkit.HeightMap.WORLD_SURFACE);
-                Block top = world.getBlockAt(cx + dx, h, cz + dz);
-                if (isUnsafeSurface(top.getType())) return false;
-            }
-        }
-        return true;
+        return new FootprintResult(true, minH);
     }
 
     private boolean hasAirAbove(World world, int cx, int surfaceY,
-                                int cz, int footprintRadius, int clearHeight) {
-        int step = Math.max(1, footprintRadius / 2);
-        for (int dx = -footprintRadius; dx <= footprintRadius; dx += step) {
-            for (int dz = -footprintRadius; dz <= footprintRadius; dz += step) {
+                                int cz, int radius, int clearHeight) {
+        int step = Math.max(1, radius / 2);
+        for (int dx = -radius; dx <= radius; dx += step) {
+            for (int dz = -radius; dz <= radius; dz += step) {
                 for (int dy = 1; dy <= clearHeight; dy++) {
-                    if (isSolidBlocking(world.getBlockAt(cx + dx, surfaceY + dy, cz + dz).getType())) return false;
+                    if (isSolidBlocking(world.getBlockAt(cx + dx, surfaceY + dy, cz + dz).getType()))
+                        return false;
                 }
             }
         }

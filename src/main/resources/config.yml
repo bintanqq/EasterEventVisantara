@@ -25,18 +25,44 @@ structure-settings:
   # KOSONGKAN untuk allow semua biome (disarankan untuk awal testing).
   # Untuk cek nama biome aktual pakai: /easter debug biome
   # Contoh nama: plains, meadow, flower_forest, sunflower_plains
-  biome-whitelist: []
-  # biome-whitelist:
-  #   - "plains"
-  #   - "meadow"
-  #   - "sunflower_plains"
-  #   - "flower_forest"
-
-  # Probabilitas struktur muncul per chunk (0.0-1.0).
-  # 0.05 = 5% per chunk = sekitar 10-20 struktur per 500x500 area.
-  # Turunkan untuk lebih rare, naikkan untuk lebih sering.
-  spawn-chance: 0.05
-
+  biome-whitelist:
+    - "plains"
+    - "sunflower_plains"
+    - "meadow"
+    - "flower_forest"
+    - "forest"
+    - "birch_forest"
+    - "old_growth_birch_forest"
+    - "dark_forest"
+    - "taiga"
+    - "old_growth_pine_taiga"
+    - "old_growth_spruce_taiga"
+    - "snowy_taiga"
+    - "snowy_plains"
+    - "snowy_slopes"
+    - "grove"
+    - "cherry_grove"
+    - "savanna"
+    - "savanna_plateau"
+    - "windswept_savanna"
+    - "jungle"
+    - "sparse_jungle"
+    - "bamboo_jungle"
+    - "desert"
+    - "badlands"
+    - "eroded_badlands"
+    - "wooded_badlands"
+    - "windswept_hills"
+    - "windswept_gravelly_hills"
+    - "windswept_forest"
+    - "stony_shore"
+    - "stony_peaks"
+    - "jagged_peaks"
+    - "frozen_peaks"
+    - "ice_spikes"
+    - "beach"
+    - "snowy_beach"
+    - "mushroom_fields"
 
   # Jarak minimum antar struktur (blok). Naikkan untuk lebih jarang/tersebar.
   min-distance-between: 256
@@ -47,11 +73,6 @@ structure-settings:
   # Radius footprint struktur (blok). Set sesuai lebar struktur kamu.
   # nbt 10x10 blok = radius 5. Makin besar = makin ketat.
   flat-check-radius: 4
-
-  # Toleransi ketinggian antar titik footprint (blok).
-  # 2 = boleh ada perbedaan 2 blok naik/turun dalam area footprint.
-  # Turunkan ke 1 untuk terrain yang sangat flat saja.
-  flat-max-height-diff: 2
 
   # Tinggi ruang udara di atas struktur (blok). Set sesuai tinggi schem.
   # Rumah 2 lantai ~8 blok: set 10. Schem besar: set lebih tinggi.

@@ -30,8 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class StructurePlacementTask implements Listener {
 
-    private static final int BATCH_SIZE        = 10;
-    private static final long BATCH_DELAY_TICKS = 2L;
+    private static final int BATCH_SIZE        = 20;
+    private static final long BATCH_DELAY_TICKS = 1L;
 
     private final EasterEventVisantara plugin;
     private final StructureManager     structureManager;

@@ -57,6 +57,8 @@ public class EasterEventVisantara extends JavaPlugin {
         balloonTracker   = new BalloonTracker(this);
         notifyManager    = new NotifyManager(this);
         structureTracker = new StructureTracker();
+        structureTracker.init(this);
+        structureTracker.loadFromFile();
         nbtStructureUtil = new NbtStructureUtil(this);
         lootPopulator    = new LootPopulator(this);
 
