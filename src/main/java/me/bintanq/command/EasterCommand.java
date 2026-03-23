@@ -158,7 +158,17 @@ public class EasterCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(cfg.getMsgStatusHeader());
         sender.sendMessage(div);
         sender.sendMessage(c(cfg.getPrefix() + "&fResource World: " + (rwb != null ? "&a" + rw + " &7(loaded)" : "&c" + rw + " &7(not loaded)")));
-        sender.sendMessage(c(cfg.getPrefix() + "&fStatus Seed: " + (seeding ? "&eSeeding struktur..." : (rwb != null ? "&aSiap" : "&7-"))));
+        String seedStatus;
+        if (seeding) {
+            StructurePlacementTask sptRef = plugin.getStructurePlacementTask();
+            int prog  = sptRef != null ? sptRef.getSeedProgress() : 0;
+            int total = sptRef != null ? sptRef.getSeedTotal()    : 0;
+            int pct   = total > 0 ? (prog * 100 / total) : 0;
+            seedStatus = c("&eSeeding... &f" + prog + "&7/&f" + total + " &7(" + pct + "%)");
+        } else {
+            seedStatus = rwb != null ? c("&aSiap") : c("&7-");
+        }
+        sender.sendMessage(c(cfg.getPrefix() + "&fStatus Seed: ") + seedStatus);
         sender.sendMessage(c(cfg.getPrefix() + "&fBorder: &d" + (int) cfg.getWorldBorderSize() + " &7x &d" + (int) cfg.getWorldBorderSize() + " &7blok"));
         sender.sendMessage(c(cfg.getPrefix() + "&fReset jam: &d" + cfg.getWorldResetTime() + " &7WIB"));
         sender.sendMessage(c(cfg.getPrefix() + "&fDebug Mode: " + (plugin.isDebugMode() ? "&aON" : "&cOFF")));

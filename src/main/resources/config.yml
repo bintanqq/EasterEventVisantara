@@ -35,9 +35,8 @@ structure-settings:
   # Probabilitas struktur muncul per chunk (0.0-1.0).
   # 0.05 = 5% per chunk = sekitar 10-20 struktur per 500x500 area.
   # Turunkan untuk lebih rare, naikkan untuk lebih sering.
-  spawn-chance: 1.0
+  spawn-chance: 0.05
 
-  max-per-chunk: 1
 
   # Jarak minimum antar struktur (blok). Naikkan untuk lebih jarang/tersebar.
   min-distance-between: 256
@@ -45,9 +44,8 @@ structure-settings:
   # Total maksimum struktur di seluruh world. -1 = tidak terbatas.
   max-total: 30
 
-  # Radius footprint struktur (blok). Semua titik dalam area ini dicek soliditasnya.
-  # Set sesuai lebar schem kamu: schem 10x10 blok = radius 5.
-  # Makin besar = makin ketat, makin banyak lokasi yang di-reject.
+  # Radius footprint struktur (blok). Set sesuai lebar struktur kamu.
+  # nbt 10x10 blok = radius 5. Makin besar = makin ketat.
   flat-check-radius: 4
 
   # Toleransi ketinggian antar titik footprint (blok).
@@ -59,31 +57,25 @@ structure-settings:
   # Rumah 2 lantai ~8 blok: set 10. Schem besar: set lebih tinggi.
   clear-height-above: 10
 
-  # Radius chunk yang di-seed saat world dibuat/seed manual.
-  # -1 = otomatis ikut border-size (direkomendasikan).
-  # > 0 = override manual, max 64. Contoh: 16 = area 512x512 blok.
-  seed-chunk-radius: -1
+  # Berapa kali dicoba per slot struktur untuk cari lokasi valid.
+  # max-total: 30 dengan attempts-per-slot: 10 = 300 titik random dicoba.
+  # Naikkan kalau sering dapat lebih sedikit dari max-total.
+  attempts-per-slot: 10
   variants:
     SmallBasket:
-      schematic: "rumahdonat.schem"
+      nbt-file: "rumahdonat.nbt"
       weight: 5
       loot-table: "common_basket"
-      # Offset Y saat paste. Positif = naik, negatif = turun ke bawah.
-      # Sesuaikan agar struktur tidak amblas ke tanah. Mulai dari 0, coba -1, -2, dst.
       paste-y-offset: 0
     GiantEgg:
-      schematic: "oakhouse.schem"
+      nbt-file: "oakhouse.nbt"
       weight: 3
       loot-table: "rare_egg"
-      # Offset Y saat paste. Positif = naik, negatif = turun ke bawah.
-      # Sesuaikan agar struktur tidak amblas ke tanah. Mulai dari 0, coba -1, -2, dst.
       paste-y-offset: 0
     EasterShrine:
-      schematic: "EasterShrine.schem"
+      nbt-file: "EasterShrine.nbt"
       weight: 1
       loot-table: "epic_shrine"
-      # Offset Y saat paste. Positif = naik, negatif = turun ke bawah.
-      # Sesuaikan agar struktur tidak amblas ke tanah. Mulai dari 0, coba -1, -2, dst.
       paste-y-offset: 0
 
 robbit-settings:

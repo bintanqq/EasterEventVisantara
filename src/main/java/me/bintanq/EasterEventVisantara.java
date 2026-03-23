@@ -2,8 +2,8 @@ package me.bintanq;
 
 import me.bintanq.command.EasterCommand;
 import me.bintanq.listener.BalloonListener;
-import me.bintanq.listener.WorldLockListener;
 import me.bintanq.listener.RobbitSpawnListener;
+import me.bintanq.listener.WorldLockListener;
 import me.bintanq.manager.ConfigManager;
 import me.bintanq.manager.EventWindowManager;
 import me.bintanq.manager.StructureManager;
@@ -14,7 +14,7 @@ import me.bintanq.task.StructurePlacementTask;
 import me.bintanq.task.WorldResetTask;
 import me.bintanq.util.BalloonTracker;
 import me.bintanq.util.LootPopulator;
-import me.bintanq.util.NbtPasteUtil;
+import me.bintanq.util.NbtStructureUtil;
 import me.bintanq.util.NotifyManager;
 import me.bintanq.util.StructureTracker;
 import org.bukkit.Bukkit;
@@ -34,7 +34,7 @@ public class EasterEventVisantara extends JavaPlugin {
     private BalloonTracker         balloonTracker;
     private NotifyManager          notifyManager;
     private StructureTracker       structureTracker;
-    private NbtPasteUtil           nbtPasteUtil;
+    private NbtStructureUtil       nbtStructureUtil;
     private LootPopulator          lootPopulator;
 
     private BalloonSpawnTask       balloonSpawnTask;
@@ -57,7 +57,7 @@ public class EasterEventVisantara extends JavaPlugin {
         balloonTracker   = new BalloonTracker(this);
         notifyManager    = new NotifyManager(this);
         structureTracker = new StructureTracker();
-        nbtPasteUtil     = new NbtPasteUtil(this);
+        nbtStructureUtil = new NbtStructureUtil(this);
         lootPopulator    = new LootPopulator(this);
 
         eventWindowManager = new EventWindowManager(this);
@@ -101,7 +101,7 @@ public class EasterEventVisantara extends JavaPlugin {
 
         structurePlacementTask = new StructurePlacementTask(
                 this, structureManager, structureTracker,
-                nbtPasteUtil, eventWindowManager, lootPopulator);
+                nbtStructureUtil, eventWindowManager, lootPopulator);
         structurePlacementTask.start();
 
         worldResetTask = new WorldResetTask(this, worldResetManager);
@@ -149,7 +149,7 @@ public class EasterEventVisantara extends JavaPlugin {
     public BalloonTracker         getBalloonTracker()             { return balloonTracker; }
     public NotifyManager          getNotifyManager()              { return notifyManager; }
     public StructureTracker       getStructureTracker()           { return structureTracker; }
-    public NbtPasteUtil           getNbtPasteUtil()               { return nbtPasteUtil; }
+    public NbtStructureUtil       getNbtStructureUtil()           { return nbtStructureUtil; }
     public LootPopulator          getLootPopulator()              { return lootPopulator; }
     public StructurePlacementTask getStructurePlacementTask()     { return structurePlacementTask; }
     public boolean                isDebugMode()                   { return debugMode; }

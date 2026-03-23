@@ -3,13 +3,12 @@ version: '1.0.0'
 main: me.bintanq.EasterEventVisantara
 api-version: '1.21'
 authors: [ bintanq ]
-description: Visantara Trade
+description: Easter Event Visantara
 
 depend:
   - MythicMobs
   - MMOItems
   - Multiverse-Core
-  - FastAsyncWorldEdit
 
 softdepend:
   - MythicLib

@@ -56,7 +56,6 @@ public class ConfigManager {
         return getPrefix() + msg(path, fallback);
     }
 
-    // ── Balloon ───────────────────────────────────────────────────────────────
     public String getMythicMobId()          { return config.getString("balloon.mythicmob-id", "EasterBalloon"); }
     public int    getSpawnIntervalMinutes() { return config.getInt("balloon.spawn-interval-minutes", 2); }
     public double getSpawnRadius()          { return config.getDouble("balloon.spawn-radius", 24.0); }
@@ -87,14 +86,12 @@ public class ConfigManager {
     public boolean isFloatEnabled()         { return config.getBoolean("balloon.float-enabled", true); }
     public int getFloatMaxYOffset()         { return config.getInt("balloon.float-max-y-offset", 20); }
 
-    // ── World ─────────────────────────────────────────────────────────────────
     public String getResourceWorldName()    { return config.getString("world-settings.resource-world-name", "easter_resource"); }
     public String getWorldResetTime()       { return config.getString("world-settings.reset-time", "00:00"); }
     public double getWorldBorderSize()      { return config.getDouble("world-settings.border-size", 5000.0); }
     public int getWorldResetHour()   { try { return Integer.parseInt(getWorldResetTime().split(":")[0]); } catch (Exception e) { return 0; } }
     public int getWorldResetMinute() { try { return Integer.parseInt(getWorldResetTime().split(":")[1]); } catch (Exception e) { return 0; } }
 
-    // Koordinat fallback spawn saat world locked / reset (format "world:x:y:z")
     public String getFallbackSpawnWorld()   { return config.getString("world-settings.fallback-spawn.world", "SpawnLobby"); }
     public double getFallbackSpawnX()       { return config.getDouble("world-settings.fallback-spawn.x", 522); }
     public double getFallbackSpawnY()       { return config.getDouble("world-settings.fallback-spawn.y", -10); }
@@ -102,7 +99,6 @@ public class ConfigManager {
     public float  getFallbackSpawnYaw()     { return (float) config.getDouble("world-settings.fallback-spawn.yaw", 0); }
     public float  getFallbackSpawnPitch()   { return (float) config.getDouble("world-settings.fallback-spawn.pitch", 0); }
 
-    // ── Structure ─────────────────────────────────────────────────────────────
     public List<String> getStructureBiomeWhitelist()  { return config.getStringList("structure-settings.biome-whitelist"); }
     public double getStructureSpawnChance()            { return config.getDouble("structure-settings.spawn-chance", 0.05); }
     public int getStructureMaxPerChunk()               { return config.getInt("structure-settings.max-per-chunk", 1); }
@@ -110,8 +106,8 @@ public class ConfigManager {
     public int getStructureMaxTotal()                  { return config.getInt("structure-settings.max-total", 30); }
     public int getStructureFlatCheckRadius()           { return config.getInt("structure-settings.flat-check-radius", 4); }
     public int getStructureFlatMaxHeightDiff()         { return config.getInt("structure-settings.flat-max-height-diff", 3); }
-    public int getStructureClearHeightAbove()           { return config.getInt("structure-settings.clear-height-above", 12); }
-    public int getSeedChunkRadius()                    { return config.getInt("structure-settings.seed-chunk-radius", 16); }
+    public int getStructureClearHeightAbove()          { return config.getInt("structure-settings.clear-height-above", 12); }
+    public int getAttemptsPerSlot()                    { return config.getInt("structure-settings.attempts-per-slot", 10); }
 
     public List<String> getStructureVariantNames() {
         ConfigurationSection sec = config.getConfigurationSection("structure-settings.variants");
@@ -119,36 +115,23 @@ public class ConfigManager {
         return new ArrayList<>(sec.getKeys(false));
     }
 
-    public String getStructureVariantSchematic(String v) {
-        return config.getString("structure-settings.variants." + v + ".schematic", v + ".schem");
+    public String getStructureVariantNbtFile(String v) {
+        return config.getString("structure-settings.variants." + v + ".nbt-file", v + ".nbt");
     }
 
     public int getStructureVariantWeight(String v) {
         return config.getInt("structure-settings.variants." + v + ".weight", 1);
     }
 
-    // Offset Y saat paste: positif = naik, negatif = turun
-    // Berguna untuk struktur yang sebagian harusnya di atas tanah
     public int getStructureVariantPasteYOffset(String v) {
         return config.getInt("structure-settings.variants." + v + ".paste-y-offset", 0);
     }
 
-    /**
-     * Kedalaman fondasi schematic (blok yang ada di bawah lantai dasar).
-     * Paste dilakukan di surfaceY - foundationDepth supaya fondasi masuk ke tanah
-     * dan lantai pertama tepat di permukaan.
-     * Set ke 0 jika struktur tidak punya fondasi.
-     */
-    public int getStructureVariantFoundationDepth(String v) {
-        return config.getInt("structure-settings.variants." + v + ".foundation-depth", 0);
-    }
 
-    // ── Robbit ────────────────────────────────────────────────────────────────
     public String getRobbitMobId()           { return config.getString("robbit-settings.mob-id", "RobbitEaster"); }
     public double getRobbitTriggerRadius()   { return config.getDouble("robbit-settings.trigger-radius", 16.0); }
     public int getRobbitMaxPerStructure()    { return config.getInt("robbit-settings.max-per-structure", 3); }
 
-    // ── Loot ──────────────────────────────────────────────────────────────────
     public List<String> getLootTableVariants() {
         ConfigurationSection sec = config.getConfigurationSection("loot-tables");
         if (sec == null) return new ArrayList<>();
@@ -176,7 +159,6 @@ public class ConfigManager {
         return config.getString("structure-settings.variants." + v + ".loot-table", "default");
     }
 
-    // ── Messages ──────────────────────────────────────────────────────────────
     public String getPrefix()               { return msg("prefix", "&d[EasterEvent] &r"); }
     public String getMsgReloadSuccess()     { return prefixed("reload.success", "&aKonfigurasi berhasil diperbarui."); }
     public String getMsgNoPermission()      { return prefixed("no-permission", "&cKamu tidak punya izin."); }

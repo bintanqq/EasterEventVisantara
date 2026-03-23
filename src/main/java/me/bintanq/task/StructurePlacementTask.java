@@ -6,7 +6,7 @@ import me.bintanq.manager.EventWindowManager;
 import me.bintanq.manager.StructureManager;
 import me.bintanq.manager.StructureManager.StructurePlacement;
 import me.bintanq.util.LootPopulator;
-import me.bintanq.util.NbtPasteUtil;
+import me.bintanq.util.NbtStructureUtil;
 import me.bintanq.util.StructureTracker;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -18,7 +18,10 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -27,14 +30,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class StructurePlacementTask implements Listener {
 
-    private static final int MAX_PASTES_PER_TICK = 1;
+    private static final int BATCH_SIZE        = 10;
+    private static final long BATCH_DELAY_TICKS = 2L;
 
     private final EasterEventVisantara plugin;
     private final StructureManager     structureManager;
     private final StructureTracker     structureTracker;
-    private final NbtPasteUtil         pasteUtil;
+    private final NbtStructureUtil     nbtStructureUtil;
     private final EventWindowManager   eventWindow;
     private final LootPopulator        lootPopulator;
+    private final Random               rng = new Random();
 
     private final Queue<StructurePlacement> pasteQueue     = new ConcurrentLinkedQueue<>();
     private final Set<String>              processedChunks = ConcurrentHashMap.newKeySet();
@@ -42,19 +47,21 @@ public class StructurePlacementTask implements Listener {
     private final AtomicBoolean seeding         = new AtomicBoolean(false);
     private final AtomicBoolean seedDone        = new AtomicBoolean(false);
     private final AtomicBoolean pasteInProgress = new AtomicBoolean(false);
+    private final AtomicInteger seedProgress    = new AtomicInteger(0);
+    private final AtomicInteger seedTotal       = new AtomicInteger(0);
 
     private BukkitTask drainTask;
 
     public StructurePlacementTask(EasterEventVisantara plugin,
                                   StructureManager structureManager,
                                   StructureTracker structureTracker,
-                                  NbtPasteUtil pasteUtil,
+                                  NbtStructureUtil nbtStructureUtil,
                                   EventWindowManager eventWindow,
                                   LootPopulator lootPopulator) {
         this.plugin           = plugin;
         this.structureManager = structureManager;
         this.structureTracker = structureTracker;
-        this.pasteUtil        = pasteUtil;
+        this.nbtStructureUtil = nbtStructureUtil;
         this.eventWindow      = eventWindow;
         this.lootPopulator    = lootPopulator;
     }
@@ -75,11 +82,15 @@ public class StructurePlacementTask implements Listener {
         seeding.set(false);
         seedDone.set(false);
         pasteInProgress.set(false);
+        seedProgress.set(0);
+        seedTotal.set(0);
         plugin.getLogger().info("[StructurePlacementTask] Stopped.");
     }
 
-    public boolean isSeeding()  { return seeding.get(); }
-    public boolean isSeedDone() { return seedDone.get(); }
+    public boolean isSeeding()       { return seeding.get(); }
+    public boolean isSeedDone()      { return seedDone.get(); }
+    public int     getSeedProgress() { return seedProgress.get(); }
+    public int     getSeedTotal()    { return seedTotal.get(); }
 
     public void seedInitialStructures(String worldName) {
         World world = Bukkit.getWorld(worldName);
@@ -90,79 +101,73 @@ public class StructurePlacementTask implements Listener {
 
         seeding.set(true);
         seedDone.set(false);
-        // Wajib clear supaya chunk yang sama bisa di-proses ulang saat /easter world seed dipanggil berulang
+        seedProgress.set(0);
         processedChunks.clear();
         pasteQueue.clear();
+        pasteInProgress.set(false);
 
-        ConfigManager cfg = plugin.getConfigManager();
-        // Hitung radius dari border size: border 5000 = 2500 blok ke tiap arah = ~156 chunk
-        // Dibatasi max 64 chunk agar tidak terlalu lama, bisa di-override via seed-chunk-radius: -1
-        int configRadius = cfg.getSeedChunkRadius();
-        int borderRadius = (int) (cfg.getWorldBorderSize() / 2.0 / 16);
-        int radius = configRadius > 0 ? Math.min(configRadius, 64) : Math.min(borderRadius, 64);
-        int total  = (radius * 2 + 1) * (radius * 2 + 1);
+        ConfigManager cfg           = plugin.getConfigManager();
+        int           maxStructures = cfg.getStructureMaxTotal();
+        int           attemptsPerSlot = cfg.getAttemptsPerSlot();
+        int           totalAttempts = maxStructures * attemptsPerSlot;
+        double        half          = cfg.getWorldBorderSize() / 2.0;
+
+        seedTotal.set(totalAttempts);
 
         plugin.getLogger().info("[StructurePlacementTask] Seed dimulai: '" + worldName
-                + "' radius=" + radius + " (" + total + " chunks)...");
+                + "' target=" + maxStructures + " struktur, "
+                + totalAttempts + " attempt, batch=" + BATCH_SIZE + "...");
 
-        AtomicInteger done = new AtomicInteger(0);
-
-        for (int cx = -radius; cx <= radius; cx++) {
-            for (int cz = -radius; cz <= radius; cz++) {
-                final int fcx = cx, fcz = cz;
-                String key = worldName + ":" + cx + ":" + cz;
-
-                if (!processedChunks.add(key)) {
-                    if (done.incrementAndGet() == total) onSeedComplete(worldName);
-                    continue;
-                }
-
-                world.getChunkAtAsync(cx, cz).thenAccept(chunk -> {
-                    // Semua logika (biome check + resolveForChunk) dijalankan di main thread
-                    // karena getHighestBlockYAt dan getBlockAt tidak thread-safe untuk world baru
-                    Bukkit.getScheduler().runTask(plugin, () -> {
-                        try {
-                            processChunk(world, chunk, fcx, fcz, worldName);
-                        } finally {
-                            if (done.incrementAndGet() == total) onSeedComplete(worldName);
-                        }
-                    });
-                });
-            }
+        List<int[]> coords = new ArrayList<>(totalAttempts);
+        for (int i = 0; i < totalAttempts; i++) {
+            int rx = (int) ((-half + rng.nextDouble() * cfg.getWorldBorderSize()) / 16);
+            int rz = (int) ((-half + rng.nextDouble() * cfg.getWorldBorderSize()) / 16);
+            coords.add(new int[]{rx, rz});
         }
+
+        scheduleBatch(world, worldName, coords, 0, new AtomicInteger(0), maxStructures);
     }
 
-    // Dipanggil dari ChunkLoadEvent (sudah di main thread)
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onChunkLoad(ChunkLoadEvent event) {
-        if (!event.isNewChunk()) return;
+    private void scheduleBatch(World world, String worldName, List<int[]> coords,
+                               int offset, AtomicInteger done, int maxStructures) {
+        if (offset >= coords.size()) return;
 
-        World world = event.getWorld();
-        ConfigManager cfg = plugin.getConfigManager();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            int end = Math.min(offset + BATCH_SIZE, coords.size());
+            int remaining = end - offset;
+            AtomicInteger batchDone = new AtomicInteger(0);
 
-        if (!world.getName().equals(cfg.getResourceWorldName())) return;
-        if (!eventWindow.isEventActive()) return;
+            for (int i = offset; i < end; i++) {
+                final int cx = coords.get(i)[0];
+                final int cz = coords.get(i)[1];
 
-        Chunk  chunk    = event.getChunk();
-        int    chunkX   = chunk.getX();
-        int    chunkZ   = chunk.getZ();
-        String chunkKey = world.getName() + ":" + chunkX + ":" + chunkZ;
-
-        if (!processedChunks.add(chunkKey)) return;
-
-        // Sudah di main thread, langsung proses
-        processChunk(world, chunk, chunkX, chunkZ, world.getName());
+                world.getChunkAtAsync(cx, cz).thenAccept(chunk ->
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            try {
+                                int current = structureTracker.getEntriesInWorld(worldName).size();
+                                if (current < maxStructures) {
+                                    tryPlaceAt(world, chunk, cx, cz, worldName);
+                                }
+                            } finally {
+                                seedProgress.incrementAndGet();
+                                int total = coords.size();
+                                if (done.incrementAndGet() == total) {
+                                    onSeedComplete(worldName);
+                                } else if (batchDone.incrementAndGet() == remaining) {
+                                    scheduleBatch(world, worldName, coords, end, done, maxStructures);
+                                }
+                            }
+                        })
+                );
+            }
+        }, BATCH_DELAY_TICKS);
     }
 
-    /**
-     * Logika utama per chunk. HARUS dipanggil dari main thread.
-     */
-    private void processChunk(World world, Chunk chunk, int chunkX, int chunkZ, String worldName) {
+    private void tryPlaceAt(World world, Chunk chunk, int chunkX, int chunkZ, String worldName) {
         ConfigManager cfg = plugin.getConfigManager();
-
         if (!isBiomeAllowed(world, chunk, cfg)) return;
 
-        StructurePlacement placement = structureManager.resolveForChunk(chunkX, chunkZ, worldName);
+        StructurePlacement placement = structureManager.resolveCandidate(world, chunkX, chunkZ, worldName);
         if (placement == null) return;
 
         pasteQueue.offer(placement);
@@ -173,18 +178,39 @@ public class StructurePlacementTask implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onChunkLoad(ChunkLoadEvent event) {
+        if (!event.isNewChunk()) return;
+
+        World world = event.getWorld();
+        ConfigManager cfg = plugin.getConfigManager();
+
+        if (!world.getName().equals(cfg.getResourceWorldName())) return;
+        if (!eventWindow.isEventActive()) return;
+        if (isSeeding()) return;
+
+        Chunk  chunk    = event.getChunk();
+        int    chunkX   = chunk.getX();
+        int    chunkZ   = chunk.getZ();
+        String chunkKey = world.getName() + ":" + chunkX + ":" + chunkZ;
+
+        if (!processedChunks.add(chunkKey)) return;
+        if (structureTracker.getEntriesInWorld(world.getName()).size() >= cfg.getStructureMaxTotal()) return;
+
+        tryPlaceAt(world, chunk, chunkX, chunkZ, world.getName());
+    }
+
     private void onSeedComplete(String worldName) {
         seeding.set(false);
         seedDone.set(true);
-        plugin.getLogger().info("[StructurePlacementTask] Scan selesai '" + worldName
-                + "'. Struktur di queue: " + pasteQueue.size());
+        int placed = structureTracker.getEntriesInWorld(worldName).size();
+        plugin.getLogger().info("[StructurePlacementTask] Seed selesai '" + worldName
+                + "'. Queue: " + pasteQueue.size() + " | Reserved: " + placed);
         Bukkit.getScheduler().runTask(plugin, () ->
                 Bukkit.broadcastMessage(plugin.getConfigManager().getMsgWorldSeedDone()));
     }
 
     private void drainQueue() {
-        // Tunggu paste sebelumnya selesai sebelum mulai yang baru
-        // Ini mencegah banyak FAWE operation jalan paralel yang menyebabkan high memory
         if (pasteInProgress.get()) return;
         if (pasteQueue.isEmpty()) return;
 
@@ -199,7 +225,7 @@ public class StructurePlacementTask implements Listener {
         plugin.getLogger().info("[StructurePlacementTask] Paste " + placement.variant
                 + " @ " + formatLoc(placement.location));
 
-        pasteUtil.pasteAsync(placement.schematicFile, placement.location, true)
+        nbtStructureUtil.pasteAsync(placement.nbtFile, placement.location, true)
                 .thenAccept(success -> {
                     if (!success) {
                         plugin.getLogger().warning("[StructurePlacementTask] Paste gagal: " + placement.variant);
@@ -210,8 +236,6 @@ public class StructurePlacementTask implements Listener {
                     structureTracker.register(placement.location, placement.variant);
                     plugin.getLogger().info("[StructurePlacementTask] OK: " + placement.variant
                             + " @ " + formatLoc(placement.location));
-                    // Delay 60 tick (3 detik) sebelum isi chest dan buka paste berikutnya
-                    // Ini beri waktu FAWE flush semua block changes ke dunia
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         lootPopulator.populateNearbyChests(placement.location, placement.variant);
                         pasteInProgress.set(false);
@@ -226,9 +250,7 @@ public class StructurePlacementTask implements Listener {
         int bx = (chunk.getX() << 4) + 8;
         int bz = (chunk.getZ() << 4) + 8;
         int by = world.getHighestBlockYAt(bx, bz, org.bukkit.HeightMap.WORLD_SURFACE);
-
-        String biome = world.getBiome(bx, by, bz).getKey().toString();
-        // Normalisasi: strip "minecraft:" prefix untuk perbandingan
+        String biome      = world.getBiome(bx, by, bz).getKey().toString();
         String biomeShort = biome.startsWith("minecraft:") ? biome.substring(10) : biome;
 
         for (String allowed : whitelist) {
@@ -236,10 +258,8 @@ public class StructurePlacementTask implements Listener {
             if (biomeShort.equalsIgnoreCase(allowedShort)) return true;
         }
 
-        // Hanya log kalau debug ON — hindari spam
         if (plugin.isDebugMode()) {
-            plugin.getLogger().info("[StructurePlacementTask] Skip biome '" + biome
-                    + "' chunk " + chunk.getX() + "," + chunk.getZ());
+            plugin.getLogger().info("[StructurePlacementTask] Skip biome '" + biome + "'");
         }
         return false;
     }
